@@ -122,33 +122,80 @@ defmodule OhioElixirWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
+    <div class="relative flex flex-row items-center border border-base-300 bg-base-200 rounded-full">
+      <div class="absolute w-1/3 h-full rounded-full bg-base-100 border border-base-300 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 z-10"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
       >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-60 hover:opacity-100" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 z-10"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
       >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-sun-micro" class="size-4 opacity-60 hover:opacity-100" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 z-10"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
       >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-moon-micro" class="size-4 opacity-60 hover:opacity-100" />
       </button>
     </div>
+    """
+  end
+
+  @doc """
+  Renders the site navbar matching ohioelixir.com style.
+
+  ## Examples
+
+      <Layouts.navbar current_user={@current_user} />
+  """
+  attr :current_user, :any, default: nil
+
+  def navbar(assigns) do
+    ~H"""
+    <nav class="bg-base-100 border-b border-base-300 py-6">
+      <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+        <h1 class="text-xl font-bold mb-4 md:mb-0">
+          <a href="/" class="hover:text-primary transition-colors">Ohio Elixir</a>
+        </h1>
+        <div class="flex items-center space-x-8">
+          <a href="#about" class="text-base-content/70 hover:text-base-content transition-colors">
+            About
+          </a>
+          <a href="#events" class="text-base-content/70 hover:text-base-content transition-colors">
+            Events
+          </a>
+          <a href="#join" class="text-base-content/70 hover:text-base-content transition-colors">
+            Join
+          </a>
+          <.theme_toggle />
+          <%= if @current_user do %>
+            <div class="flex items-center gap-4">
+              <span class="text-base-content/70 text-sm">
+                Welcome, {@current_user.email}
+              </span>
+              <a href="/sign-out" class="btn btn-ghost btn-sm">
+                Sign Out
+              </a>
+            </div>
+          <% else %>
+            <a href="/sign-in" class="btn btn-primary btn-sm">
+              Sign In
+            </a>
+          <% end %>
+        </div>
+      </div>
+    </nav>
     """
   end
 end

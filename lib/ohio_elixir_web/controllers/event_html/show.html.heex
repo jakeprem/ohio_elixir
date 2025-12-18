@@ -1,0 +1,112 @@
+<Layouts.flash_group flash={@flash} />
+
+<div class="min-h-screen">
+  <%!-- Navigation --%>
+  <Layouts.navbar current_user={@current_user} />
+
+  <%!-- Event Header --%>
+  <header class="border-b border-base-300 py-8">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="mb-4">
+        <.link navigate={~p"/"} class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm">
+          <.icon name="hero-arrow-left" class="w-4 h-4" />
+          Back to events
+        </.link>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-4">{@event.title}</h1>
+      <div class="flex flex-wrap items-center gap-4">
+        <.format_badge format={@event.format} />
+        <%= if @event.rsvp_count && @event.rsvp_count > 0 do %>
+          <span class="flex items-center gap-1 text-base-content/60">
+            <.icon name="hero-users" class="w-5 h-5" />
+            {@event.rsvp_count} {if @event.rsvp_count == 1, do: "person", else: "people"} going
+          </span>
+        <% end %>
+      </div>
+    </div>
+  </header>
+
+  <%!-- Event Details --%>
+  <div class="max-w-5xl mx-auto px-6 py-8">
+    <div class="grid md:grid-cols-3 gap-8">
+      <%!-- Main Content --%>
+      <div class="md:col-span-2 space-y-6">
+        <%!-- Date and Time --%>
+        <div class="border border-base-300 p-6">
+          <h2 class="text-lg font-bold mb-4">Date & Time</h2>
+          <div class="flex flex-wrap items-center gap-4 text-base-content/70">
+            <span class="flex items-center gap-2">
+              <.icon name="hero-calendar" class="w-5 h-5" />
+              {format_date(@event.starts_at, @event.timezone)}
+            </span>
+            <span class="flex items-center gap-2">
+              <.icon name="hero-clock" class="w-5 h-5" />
+              {format_time(@event.starts_at, @event.timezone)}
+              <%= if @event.ends_at do %>
+                - {format_time(@event.ends_at, @event.timezone)}
+              <% end %>
+            </span>
+          </div>
+        </div>
+
+        <%!-- Location --%>
+        <%= if @event.venue || @event.meeting_url do %>
+          <div class="border border-base-300 p-6">
+            <h2 class="text-lg font-bold mb-4">Location</h2>
+            <%= if @event.venue do %>
+              <div class="flex items-start gap-2">
+                <.icon name="hero-map-pin" class="w-5 h-5 mt-0.5 text-base-content/70" />
+                <div>
+                  <p class="font-medium">{@event.venue.name}</p>
+                  <%= if @event.venue.address_line_1 do %>
+                    <p class="text-base-content/60">{@event.venue.address_line_1}</p>
+                  <% end %>
+                  <%= if @event.venue.city do %>
+                    <p class="text-base-content/60">
+                      {@event.venue.city}, {@event.venue.state} {@event.venue.postal_code}
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <%= if @event.meeting_url do %>
+              <div class="flex items-center gap-2 mt-4">
+                <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
+                <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
+                  Join Online
+                </a>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%!-- Description --%>
+        <%= if @event.description do %>
+          <div class="border border-base-300 p-6">
+            <h2 class="text-lg font-bold mb-4">About this event</h2>
+            <div class="prose prose-sm max-w-none text-base-content/80">
+              <p class="whitespace-pre-wrap">{@event.description}</p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%!-- Sidebar with RSVP --%>
+      <div class="md:col-span-1">
+        <div class="border border-base-300 p-6 sticky top-4">
+          <h2 class="text-lg font-bold mb-4">RSVP</h2>
+          <%= live_render(@conn, OhioElixirWeb.RsvpLive,
+            id: "rsvp-#{@event.id}",
+            session: %{
+              "event_id" => @event.id,
+              "event_format" => @event.format,
+              "venue_name" => if(@event.venue, do: @event.venue.name, else: nil),
+              "meeting_url" => @event.meeting_url,
+              "existing_rsvp_id" => if(@existing_rsvp, do: @existing_rsvp.id, else: nil)
+            }
+          ) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -53,6 +53,8 @@ defmodule OhioElixirWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/events/:id", EventController, :show
+
     auth_routes AuthController, OhioElixir.Accounts.User, path: "/auth"
     sign_out_route AuthController
 
@@ -78,11 +80,9 @@ defmodule OhioElixirWeb.Router do
       auth_routes_prefix: "/auth",
       overrides: [OhioElixirWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
 
-    # Remove this if you do not use the magic link strategy.
-    magic_sign_in_route(OhioElixir.Accounts.User, :magic_link,
-      auth_routes_prefix: "/auth",
-      overrides: [OhioElixirWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
-    )
+    # Magic link callback is handled by auth_routes above.
+    # The magic_sign_in_route is disabled due to a bug in ash_authentication_phoenix 2.13.1
+    # where it crashes when looking for `:preparations` on create actions.
   end
 
   # Other scopes may use custom stacks.

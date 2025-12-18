@@ -78,8 +78,13 @@ config :spark,
 config :ohio_elixir,
   ecto_repos: [OhioElixir.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [OhioElixir.Accounts],
+  ash_domains: [OhioElixir.Accounts, OhioElixir.Events],
   ash_authentication: [return_error_on_invalid_magic_link_token?: true]
+
+# Bypass the require_interaction warning - we're intentionally not using
+# magic_sign_in_route due to a bug in ash_authentication_phoenix 2.13.1
+# where it crashes when looking for `:preparations` on create actions.
+config :ash_authentication, :bypass_require_interaction_for_magic_link?, true
 
 # Configure the endpoint
 config :ohio_elixir, OhioElixirWeb.Endpoint,

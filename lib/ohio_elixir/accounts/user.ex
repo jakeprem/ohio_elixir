@@ -4,11 +4,21 @@ defmodule OhioElixir.Accounts.User do
     domain: OhioElixir.Accounts,
     data_layer: AshSqlite.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshAuthentication]
+    extensions: [AshAuthentication, AshJsonApi.Resource]
 
   sqlite do
     table "users"
     repo OhioElixir.Repo
+  end
+
+  json_api do
+    type "user"
+
+    routes do
+      base "/users"
+
+      get :me, route: "/me"
+    end
   end
 
   authentication do
@@ -30,7 +40,6 @@ defmodule OhioElixir.Accounts.User do
       magic_link do
         identity_field :email
         registration_enabled? true
-        require_interaction? true
 
         sender OhioElixir.Accounts.User.Senders.SendMagicLinkEmail
       end
@@ -39,6 +48,26 @@ defmodule OhioElixir.Accounts.User do
 
   actions do
     defaults [:read]
+
+    read :me do
+      description "Get the current authenticated user"
+      get? true
+      filter expr(id == ^actor(:id))
+    end
+
+    create :seed do
+      description "Create a user for seeding purposes (no authentication)"
+      accept [:email, :role]
+    end
+
+    create :find_or_create_by_email do
+      description "Find or create user by email for guest RSVP"
+      argument :email, :ci_string, allow_nil?: false
+      upsert? true
+      upsert_identity :unique_email
+      upsert_fields [:email]
+      change set_attribute(:email, arg(:email))
+    end
 
     read :get_by_subject do
       description "Get a user by the subject claim in a JWT"
@@ -49,7 +78,9 @@ defmodule OhioElixir.Accounts.User do
 
     read :get_by_email do
       description "Looks up a user by their email"
-      get_by :email
+      argument :email, :ci_string, allow_nil?: false
+      get? true
+      filter expr(email == ^arg(:email))
     end
 
     create :sign_in_with_magic_link do
@@ -60,11 +91,6 @@ defmodule OhioElixir.Accounts.User do
         allow_nil? false
       end
 
-      argument :remember_me, :boolean do
-        description "Whether to generate a remember me token"
-        allow_nil? true
-      end
-
       upsert? true
       upsert_identity :unique_email
       upsert_fields [:email]
@@ -72,15 +98,14 @@ defmodule OhioElixir.Accounts.User do
       # Uses the information from the token to create or sign in the user
       change AshAuthentication.Strategy.MagicLink.SignInChange
 
-      change {AshAuthentication.Strategy.RememberMe.MaybeGenerateTokenChange,
-              strategy_name: :remember_me}
-
       metadata :token, :string do
         allow_nil? false
       end
     end
 
     action :request_magic_link do
+      description "Request a magic link to be sent to the user's email."
+
       argument :email, :ci_string do
         allow_nil? false
       end
@@ -93,6 +118,14 @@ defmodule OhioElixir.Accounts.User do
     bypass AshAuthentication.Checks.AshAuthenticationInteraction do
       authorize_if always()
     end
+
+    policy action(:find_or_create_by_email) do
+      authorize_if always()
+    end
+
+    policy action(:me) do
+      authorize_if actor_present()
+    end
   end
 
   attributes do
@@ -102,6 +135,21 @@ defmodule OhioElixir.Accounts.User do
       allow_nil? false
       public? true
     end
+
+    attribute :role, :atom do
+      allow_nil? false
+      default :user
+      public? true
+      constraints one_of: [:user, :admin]
+    end
+  end
+
+  relationships do
+    has_many :created_events, OhioElixir.Events.Event do
+      destination_attribute :created_by_id
+    end
+
+    has_many :rsvps, OhioElixir.Events.Rsvp
   end
 
   identities do
