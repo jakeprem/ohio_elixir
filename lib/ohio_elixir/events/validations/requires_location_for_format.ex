@@ -10,25 +10,37 @@ defmodule OhioElixir.Events.Validations.RequiresLocationForFormat do
 
   @impl true
   def validate(changeset, _opts, _context) do
+    status = Ash.Changeset.get_attribute(changeset, :status)
+
+    if status == :published do
+      validate_location_for_format(changeset)
+    else
+      :ok
+    end
+  end
+
+  defp validate_location_for_format(changeset) do
     format = Ash.Changeset.get_attribute(changeset, :format)
     venue_id = Ash.Changeset.get_attribute(changeset, :venue_id)
     meeting_url = Ash.Changeset.get_attribute(changeset, :meeting_url)
 
-    case format do
-      :in_person when is_nil(venue_id) ->
-        {:error, field: :venue_id, message: "In-person events require a venue"}
+    cond do
+      format in [:in_person, :hybrid] and is_nil(venue_id) ->
+        {:error, field: :venue_id, message: "#{format_name(format)} events require a venue"}
 
-      :online when is_nil(meeting_url) or meeting_url == "" ->
-        {:error, field: :meeting_url, message: "Online events require a meeting URL"}
+      format in [:online, :hybrid] and blank?(meeting_url) ->
+        {:error, field: :meeting_url, message: "#{format_name(format)} events require a meeting URL"}
 
-      :hybrid when is_nil(venue_id) ->
-        {:error, field: :venue_id, message: "Hybrid events require a venue"}
-
-      :hybrid when is_nil(meeting_url) or meeting_url == "" ->
-        {:error, field: :meeting_url, message: "Hybrid events require a meeting URL"}
-
-      _ ->
+      true ->
         :ok
     end
   end
+
+  defp format_name(:in_person), do: "In-person"
+  defp format_name(:online), do: "Online"
+  defp format_name(:hybrid), do: "Hybrid"
+
+  defp blank?(nil), do: true
+  defp blank?(""), do: true
+  defp blank?(_), do: false
 end

@@ -72,9 +72,16 @@
             <%= if @event.meeting_url do %>
               <div class="flex items-center gap-2 mt-4">
                 <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
-                <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
-                  Join Online
-                </a>
+                <%= if show_meeting_url?(@existing_rsvp, @current_user) do %>
+                  <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
+                    Join Online
+                  </a>
+                <% else %>
+                  <span class="text-base-content/50 flex items-center gap-1">
+                    <.icon name="hero-lock-closed" class="w-4 h-4" />
+                    RSVP to view link
+                  </span>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -93,19 +100,10 @@
 
       <%!-- Sidebar with RSVP --%>
       <div class="md:col-span-1">
-        <div class="border border-base-300 p-6 sticky top-4">
-          <h2 class="text-lg font-bold mb-4">RSVP</h2>
-          <%= live_render(@conn, OhioElixirWeb.RsvpLive,
-            id: "rsvp-#{@event.id}",
-            session: %{
-              "event_id" => @event.id,
-              "event_format" => @event.format,
-              "venue_name" => if(@event.venue, do: @event.venue.name, else: nil),
-              "meeting_url" => @event.meeting_url,
-              "existing_rsvp_id" => if(@existing_rsvp, do: @existing_rsvp.id, else: nil)
-            }
-          ) %>
-        </div>
+        <%= live_render(@conn, OhioElixirWeb.RsvpLive,
+          id: "rsvp-#{@event.id}",
+          session: %{"event_id" => @event.id}
+        ) %>
       </div>
     </div>
   </div>

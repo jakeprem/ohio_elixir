@@ -48,39 +48,14 @@ defmodule OhioElixir.Events.Venue do
       constraints min_length: 1, max_length: 255
     end
 
-    attribute :address_line_1, :string do
-      public? true
-    end
-
-    attribute :address_line_2, :string do
-      public? true
-    end
-
-    attribute :city, :string do
-      public? true
-    end
-
-    attribute :state, :string do
-      public? true
-    end
-
-    attribute :postal_code, :string do
-      public? true
-    end
-
-    attribute :country, :string do
-      default "US"
-      public? true
-    end
-
-    attribute :notes, :string do
-      public? true
-      constraints max_length: 2000
-    end
-
-    attribute :website_url, :string do
-      public? true
-    end
+    attribute :address_line_1, :string, public?: true
+    attribute :address_line_2, :string, public?: true
+    attribute :city, :string, public?: true
+    attribute :state, :string, public?: true
+    attribute :postal_code, :string, public?: true
+    attribute :country, :string, public?: true, default: "US"
+    attribute :notes, :string, public?: true, constraints: [max_length: 2000]
+    attribute :website_url, :string, public?: true
 
     create_timestamp :inserted_at
     update_timestamp :updated_at

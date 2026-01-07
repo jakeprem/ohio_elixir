@@ -155,9 +155,12 @@ defmodule OhioElixirWeb.Layouts do
   @doc """
   Renders the site navbar matching ohioelixir.com style.
 
+  Auth state is handled client-side via data-auth-* attributes for cacheability.
+  See assets/js/app.js for the Auth module that hydrates these elements.
+
   ## Examples
 
-      <Layouts.navbar current_user={@current_user} />
+      <Layouts.navbar />
   """
   attr :current_user, :any, default: nil
 
@@ -179,20 +182,14 @@ defmodule OhioElixirWeb.Layouts do
             Join
           </a>
           <.theme_toggle />
-          <%= if @current_user do %>
-            <div class="flex items-center gap-4">
-              <span class="text-base-content/70 text-sm">
-                Welcome, {@current_user.email}
-              </span>
-              <a href="/sign-out" class="btn btn-ghost btn-sm">
-                Sign Out
-              </a>
-            </div>
-          <% else %>
-            <a href="/sign-in" class="btn btn-primary btn-sm">
-              Sign In
-            </a>
-          <% end %>
+          <div class="flex items-center gap-4">
+            <%= if @current_user do %>
+              <span class="text-base-content/70 text-sm"><%= @current_user.email %></span>
+              <a href="/sign-out" class="btn btn-ghost btn-sm">Sign Out</a>
+            <% else %>
+              <a href="/sign-in" class="btn btn-primary btn-sm">Sign In</a>
+            <% end %>
+          </div>
         </div>
       </div>
     </nav>

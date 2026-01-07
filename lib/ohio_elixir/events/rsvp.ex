@@ -34,6 +34,10 @@ defmodule OhioElixir.Events.Rsvp do
 
       argument :event_id, :uuid, allow_nil?: false
 
+      upsert? true
+      upsert_identity :unique_user_event
+      upsert_fields [:status, :attendance_mode, :notes]
+
       change relate_actor(:user)
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
@@ -46,9 +50,19 @@ defmodule OhioElixir.Events.Rsvp do
       argument :event_id, :uuid, allow_nil?: false
       argument :email, :ci_string, allow_nil?: false
 
+      upsert? true
+      upsert_identity :unique_user_event
+      upsert_fields [:status, :attendance_mode, :notes]
+
       change {OhioElixir.Events.Changes.FindOrCreateUserByEmail, []}
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
+    end
+
+    update :update do
+      description "Update an RSVP (e.g., change attendance mode)."
+      primary? true
+      accept [:attendance_mode, :notes]
     end
 
     update :cancel do
@@ -67,12 +81,12 @@ defmodule OhioElixir.Events.Rsvp do
       prepare build(load: [:event])
     end
 
-    read :get_by_email_and_event do
-      description "Check if an email has already RSVPed to an event"
-      argument :email, :ci_string, allow_nil?: false
+    read :get_by_user_and_event do
+      description "Get an RSVP by user ID and event ID"
+      argument :user_id, :uuid, allow_nil?: false
       argument :event_id, :uuid, allow_nil?: false
       get? true
-      filter expr(user.email == ^arg(:email) and event_id == ^arg(:event_id))
+      filter expr(user_id == ^arg(:user_id) and event_id == ^arg(:event_id))
     end
   end
 
@@ -82,8 +96,8 @@ defmodule OhioElixir.Events.Rsvp do
       authorize_if actor_present()
     end
 
-    # Check RSVP by email - public (used for guest RSVP flow)
-    policy action(:get_by_email_and_event) do
+    # Get RSVP by user and event - for checking existing RSVPs
+    policy action(:get_by_user_and_event) do
       authorize_if always()
     end
 
@@ -103,6 +117,12 @@ defmodule OhioElixir.Events.Rsvp do
     # Guest RSVP - public (no actor required)
     policy action(:guest_rsvp) do
       authorize_if always()
+    end
+
+    # Update - admin or own RSVP
+    policy action(:update) do
+      authorize_if actor_attribute_equals(:role, :admin)
+      authorize_if relates_to_actor_via(:user)
     end
 
     # Cancel - admin or own RSVP
@@ -127,20 +147,9 @@ defmodule OhioElixir.Events.Rsvp do
       constraints one_of: [:confirmed, :cancelled, :waitlisted]
     end
 
-    attribute :notes, :string do
-      public? true
-      constraints max_length: 500
-    end
-
-    attribute :attended, :boolean do
-      default false
-      public? true
-    end
-
-    attribute :attendance_mode, :atom do
-      public? true
-      constraints one_of: [:in_person, :online]
-    end
+    attribute :notes, :string, public?: true, constraints: [max_length: 500]
+    attribute :attended, :boolean, public?: true, default: false
+    attribute :attendance_mode, :atom, public?: true, constraints: [one_of: [:in_person, :online]]
 
     create_timestamp :inserted_at
     update_timestamp :updated_at

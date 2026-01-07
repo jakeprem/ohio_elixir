@@ -17,8 +17,7 @@ defmodule OhioElixir.Events.Event do
     routes do
       base "/events"
 
-      index :list_published
-      index :list_upcoming, route: "/upcoming"
+      index :read
       get :read
       post :create
       patch :update
@@ -29,19 +28,15 @@ defmodule OhioElixir.Events.Event do
   end
 
   actions do
-    defaults [:read, :destroy, update: :*]
+    defaults [:read, :destroy]
 
-    read :list_published do
-      description "List all published events, sorted by start time."
-      filter expr(status == :published)
-      prepare build(sort: [starts_at: :asc])
+    update :update do
+      primary? true
+      require_atomic? false
+      accept :*
+      validate {OhioElixir.Events.Validations.RequiresLocationForFormat, []}
     end
 
-    read :list_upcoming do
-      description "List upcoming published events (start time in the future)."
-      filter expr(status == :published and starts_at > now())
-      prepare build(sort: [starts_at: :asc])
-    end
 
     create :create do
       description "Create a new event in draft status."
@@ -80,18 +75,11 @@ defmodule OhioElixir.Events.Event do
   end
 
   policies do
-    # Public read actions - anyone can use (they filter to published internally)
-    policy action([:list_published, :list_upcoming]) do
-      authorize_if always()
-    end
-
-    # General read - admin can read all, anyone can read published
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
       authorize_if expr(status == :published)
     end
 
-    # All writes - admin only
     policy action_type([:create, :update, :destroy]) do
       authorize_if actor_attribute_equals(:role, :admin)
     end
@@ -106,10 +94,7 @@ defmodule OhioElixir.Events.Event do
       constraints min_length: 1, max_length: 255
     end
 
-    attribute :description, :string do
-      public? true
-      constraints max_length: 10_000
-    end
+    attribute :description, :string, public?: true, constraints: [max_length: 10_000]
 
     attribute :status, :atom do
       allow_nil? false
@@ -130,9 +115,7 @@ defmodule OhioElixir.Events.Event do
       public? true
     end
 
-    attribute :ends_at, :utc_datetime do
-      public? true
-    end
+    attribute :ends_at, :utc_datetime, public?: true
 
     attribute :timezone, :string do
       allow_nil? false
@@ -140,14 +123,8 @@ defmodule OhioElixir.Events.Event do
       public? true
     end
 
-    attribute :meeting_url, :string do
-      public? true
-    end
-
-    attribute :capacity, :integer do
-      public? true
-      constraints min: 1
-    end
+    attribute :meeting_url, :string, public?: true
+    attribute :capacity, :integer, public?: true, constraints: [min: 1]
 
     create_timestamp :inserted_at
     update_timestamp :updated_at
@@ -168,7 +145,14 @@ defmodule OhioElixir.Events.Event do
   end
 
   calculations do
-    calculate :rsvp_count, :integer, OhioElixir.Events.Calculations.RsvpCount
+    calculate :rsvp_count, :integer,
+              expr(
+                fragment(
+                  "(SELECT COUNT(*) FROM event_rsvps WHERE event_id = ? AND status = 'confirmed')",
+                  id
+                )
+              )
+
     calculate :upcoming?, :boolean, expr(starts_at > now())
     calculate :past?, :boolean, expr(starts_at <= now())
   end

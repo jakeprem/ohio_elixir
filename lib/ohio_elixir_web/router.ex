@@ -18,6 +18,8 @@ defmodule OhioElixirWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
+    plug :load_from_session
     plug :load_from_bearer
     plug :set_actor, :user
   end
@@ -39,11 +41,11 @@ defmodule OhioElixirWeb.Router do
     end
   end
 
-  scope "/api/json" do
+  scope "/api" do
     pipe_through [:api]
 
     forward "/swaggerui", OpenApiSpex.Plug.SwaggerUI,
-      path: "/api/json/open_api",
+      path: "/api/open_api",
       default_model_expand_depth: 4
 
     forward "/", OhioElixirWeb.AshJsonApiRouter
@@ -63,32 +65,21 @@ defmodule OhioElixirWeb.Router do
                   reset_path: "/reset",
                   auth_routes_prefix: "/auth",
                   on_mount: [{OhioElixirWeb.LiveUserAuth, :live_no_user}],
-                  overrides: [
-                    OhioElixirWeb.AuthOverrides,
-                    Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
-                  ]
+                  overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
 
     # Remove this if you do not want to use the reset password feature
     reset_route auth_routes_prefix: "/auth",
-                overrides: [
-                  OhioElixirWeb.AuthOverrides,
-                  Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
-                ]
+                overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
 
     # Remove this if you do not use the confirmation strategy
     confirm_route OhioElixir.Accounts.User, :confirm_new_user,
       auth_routes_prefix: "/auth",
-      overrides: [OhioElixirWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
+      overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
 
     # Magic link callback is handled by auth_routes above.
     # The magic_sign_in_route is disabled due to a bug in ash_authentication_phoenix 2.13.1
     # where it crashes when looking for `:preparations` on create actions.
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", OhioElixirWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:ohio_elixir, :dev_routes) do

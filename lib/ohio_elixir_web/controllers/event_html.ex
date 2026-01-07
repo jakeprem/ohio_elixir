@@ -8,8 +8,18 @@ defmodule OhioElixirWeb.EventHTML do
 
   embed_templates "event_html/*"
 
-  # Delegate formatting helpers to PageHTML to avoid duplication
-  defdelegate format_date(datetime, timezone), to: OhioElixirWeb.PageHTML
-  defdelegate format_time(datetime, timezone), to: OhioElixirWeb.PageHTML
-  defdelegate format_badge(assigns), to: OhioElixirWeb.PageHTML
+  @doc """
+  Check if meeting URL should be shown based on RSVP status and user role.
+
+  Returns true if:
+  - User is an admin
+  - User has a confirmed RSVP for the event
+  """
+  def show_meeting_url?(existing_rsvp, current_user) do
+    cond do
+      current_user && current_user.role == :admin -> true
+      existing_rsvp && existing_rsvp.status == :confirmed -> true
+      true -> false
+    end
+  end
 end

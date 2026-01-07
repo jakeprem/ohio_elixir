@@ -8,88 +8,48 @@ defmodule OhioElixirWeb.RsvpLive do
 
   alias OhioElixir.Events
   alias OhioElixir.Events.Rsvp
+  alias Phoenix.LiveView.JS
 
   on_mount {OhioElixirWeb.LiveUserAuth, :current_user}
 
   @impl true
   def mount(_params, session, socket) do
     event_id = session["event_id"]
-    event_format = session["event_format"]
-    venue_name = session["venue_name"]
-    meeting_url = session["meeting_url"]
-    existing_rsvp_id = session["existing_rsvp_id"]
+    current_user = socket.assigns[:current_user]
 
-    if connected?(socket) do
-      current_user = socket.assigns[:current_user]
+    {:ok, event} = Events.get_event(event_id, load: [:venue])
+    existing_rsvp = get_existing_rsvp(current_user, event_id)
 
-      # Load existing RSVP if we have one
-      existing_rsvp =
-        cond do
-          existing_rsvp_id ->
-            case Ash.get(Rsvp, existing_rsvp_id) do
-              {:ok, rsvp} -> rsvp
-              _ -> nil
-            end
+    attendance_mode =
+      (existing_rsvp && existing_rsvp.attendance_mode) ||
+        default_attendance_mode(event.format)
 
-          current_user ->
-            case Events.get_rsvp_by_email_and_event(current_user.email, event_id) do
-              {:ok, rsvp} -> rsvp
-              _ -> nil
-            end
+    socket =
+      socket
+      |> assign(
+        event_id: event_id,
+        event: event,
+        existing_rsvp: existing_rsvp,
+        form: nil,
+        submitting: false,
+        attendance_mode: attendance_mode
+      )
+      |> maybe_build_form(existing_rsvp)
 
-          true ->
-            nil
-        end
-
-      rsvp_status = determine_rsvp_status(existing_rsvp)
-
-      socket =
-        socket
-        |> assign(
-          loading: false,
-          event_id: event_id,
-          event_format: event_format,
-          venue_name: venue_name,
-          meeting_url: meeting_url,
-          existing_rsvp: existing_rsvp,
-          rsvp_status: rsvp_status,
-          form: nil,
-          submitting: false,
-          selected_mode: default_attendance_mode(event_format)
-        )
-        |> maybe_build_form(rsvp_status)
-
-      {:ok, socket}
-    else
-      # Not connected yet - show loading state
-      {:ok,
-       assign(socket,
-         loading: true,
-         event_id: event_id,
-         event_format: event_format,
-         venue_name: venue_name,
-         meeting_url: meeting_url,
-         existing_rsvp: nil,
-         rsvp_status: :loading,
-         form: nil,
-         submitting: false,
-         selected_mode: default_attendance_mode(event_format)
-       )}
-    end
+    {:ok, socket}
   end
 
-  defp default_attendance_mode(:in_person), do: :in_person
   defp default_attendance_mode(:online), do: :online
-  defp default_attendance_mode(:hybrid), do: :in_person
+  defp default_attendance_mode(format) when format in [:in_person, :hybrid], do: :in_person
   defp default_attendance_mode(_), do: nil
 
-  defp determine_rsvp_status(nil), do: :not_rsvped
-  defp determine_rsvp_status(%{status: :confirmed}), do: :already_rsvped
-  defp determine_rsvp_status(%{status: :cancelled}), do: :cancelled
-  defp determine_rsvp_status(%{status: :waitlisted}), do: :waitlisted
-  defp determine_rsvp_status(_), do: :not_rsvped
+  defp rsvp_status(nil), do: :not_rsvped
+  defp rsvp_status(%{status: :confirmed}), do: :already_rsvped
+  defp rsvp_status(%{status: :cancelled}), do: :cancelled
+  defp rsvp_status(%{status: :waitlisted}), do: :waitlisted
+  defp rsvp_status(_), do: :not_rsvped
 
-  defp maybe_build_form(socket, :not_rsvped) do
+  defp maybe_build_form(socket, nil = _existing_rsvp) do
     if is_nil(socket.assigns[:current_user]) do
       form =
         Rsvp
@@ -105,31 +65,29 @@ defmodule OhioElixirWeb.RsvpLive do
     end
   end
 
-  defp maybe_build_form(socket, _status), do: socket
+  defp maybe_build_form(socket, _existing_rsvp), do: socket
 
   @impl true
   def handle_event("rsvp", _params, socket) do
     current_user = socket.assigns[:current_user]
     event_id = socket.assigns.event_id
-    attendance_mode = socket.assigns.selected_mode
+    attendance_mode = socket.assigns.attendance_mode
 
     socket = assign(socket, submitting: true)
 
-    opts = [actor: current_user]
-
-    opts =
+    input =
       if attendance_mode do
-        Keyword.put(opts, :params, %{attendance_mode: attendance_mode})
+        %{attendance_mode: attendance_mode}
       else
-        opts
+        %{}
       end
 
-    case Events.rsvp_to_event(event_id, opts) do
+    case Events.rsvp_to_event(event_id, input, actor: current_user) do
       {:ok, rsvp} ->
         {:noreply,
          assign(socket,
            existing_rsvp: rsvp,
-           rsvp_status: :already_rsvped,
+           attendance_mode: rsvp.attendance_mode || attendance_mode,
            submitting: false
          )}
 
@@ -143,7 +101,54 @@ defmodule OhioElixirWeb.RsvpLive do
 
   @impl true
   def handle_event("select_mode", %{"mode" => mode}, socket) do
-    {:noreply, assign(socket, selected_mode: String.to_existing_atom(mode))}
+    {:noreply, assign(socket, attendance_mode: String.to_existing_atom(mode))}
+  end
+
+  @impl true
+  def handle_event("cancel_rsvp", _params, socket) do
+    current_user = socket.assigns[:current_user]
+    existing_rsvp = socket.assigns.existing_rsvp
+
+    socket = assign(socket, submitting: true)
+
+    case Events.cancel_rsvp(existing_rsvp, actor: current_user) do
+      {:ok, _rsvp} ->
+        {:noreply,
+         socket
+         |> assign(existing_rsvp: nil, submitting: false)
+         |> maybe_build_form(nil)}
+
+      {:error, error} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, format_error(error))
+         |> assign(submitting: false)}
+    end
+  end
+
+  @impl true
+  def handle_event("update_attendance_mode", %{"mode" => mode}, socket) do
+    current_user = socket.assigns[:current_user]
+    existing_rsvp = socket.assigns.existing_rsvp
+    new_mode = String.to_existing_atom(mode)
+
+    socket = assign(socket, submitting: true)
+
+    case Ash.update(existing_rsvp, %{attendance_mode: new_mode}, actor: current_user) do
+      {:ok, updated_rsvp} ->
+        {:noreply,
+         assign(socket,
+           existing_rsvp: updated_rsvp,
+           attendance_mode: new_mode,
+           submitting: false
+         )}
+
+      {:error, error} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, format_error(error))
+         |> assign(submitting: false)}
+    end
   end
 
   @impl true
@@ -162,18 +167,19 @@ defmodule OhioElixirWeb.RsvpLive do
   @impl true
   def handle_event("submit", %{"rsvp" => params}, socket) do
     socket = assign(socket, submitting: true)
+    attendance_mode = socket.assigns.attendance_mode
 
     params =
       params
       |> Map.put("event_id", socket.assigns.event_id)
-      |> Map.put("attendance_mode", socket.assigns.selected_mode)
+      |> Map.put("attendance_mode", attendance_mode)
 
     case AshPhoenix.Form.submit(socket.assigns.form.source, params: params) do
       {:ok, rsvp} ->
         {:noreply,
          assign(socket,
            existing_rsvp: rsvp,
-           rsvp_status: :already_rsvped,
+           attendance_mode: rsvp.attendance_mode || attendance_mode,
            submitting: false
          )}
 
@@ -197,124 +203,69 @@ defmodule OhioElixirWeb.RsvpLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="rsvp-component">
-      <%= case @rsvp_status do %>
-        <% :loading -> %>
-          <div class="flex justify-center py-4">
-            <span class="loading loading-spinner loading-md"></span>
-          </div>
-        <% :already_rsvped -> %>
-          <div class="flex flex-col items-center gap-2 py-2">
-            <span class="badge badge-success gap-2">
-              <.icon name="hero-check-circle" class="w-4 h-4" />
-              You're going!
-            </span>
-            <.attendance_mode_info
-              mode={@existing_rsvp.attendance_mode || @selected_mode}
-              venue_name={@venue_name}
-              meeting_url={@meeting_url}
-            />
-          </div>
-        <% :waitlisted -> %>
-          <div class="flex flex-col items-center gap-2 py-2">
-            <span class="badge badge-warning gap-2">
-              <.icon name="hero-clock" class="w-4 h-4" />
-              Waitlisted
-            </span>
-            <p class="text-sm text-base-content/60">We'll notify you if a spot opens up</p>
-          </div>
-        <% :cancelled -> %>
-          <div class="flex flex-col items-center gap-2 py-2">
-            <span class="text-base-content/70">RSVP cancelled</span>
-          </div>
-        <% :not_rsvped -> %>
-          <div class="space-y-3">
-            <.attendance_mode_selector
-              :if={@event_format == :hybrid}
-              selected_mode={@selected_mode}
-            />
+    <div class="border border-base-300 p-6 sticky top-4 rsvp-component">
+      <h2 class="text-lg font-bold mb-4">RSVP</h2>
+      <div class="space-y-3">
+        <%!-- Mode selector for hybrid events --%>
+        <.attendance_mode_selector
+          :if={@event.format == :hybrid}
+          selected_mode={@attendance_mode}
+          disabled={@submitting}
+          has_rsvp={rsvp_status(@existing_rsvp) == :already_rsvped}
+        />
 
-            <.attendance_mode_info
-              mode={@selected_mode}
-              venue_name={@venue_name}
-              meeting_url={@meeting_url}
-            />
+        <%!-- Location info --%>
+        <.attendance_mode_info
+          mode={@attendance_mode}
+          venue_name={@event.venue && @event.venue.name}
+          meeting_url={@event.meeting_url}
+        />
 
-            <%= if @current_user do %>
-              <%!-- Authenticated user: simple button --%>
-              <button
-                phx-click="rsvp"
-                class="btn btn-primary w-full"
-                disabled={@submitting}
-              >
-                <%= if @submitting do %>
-                  <span class="loading loading-spinner loading-sm"></span>
-                <% else %>
-                  <.icon name="hero-hand-raised" class="w-5 h-5" />
-                <% end %>
-                RSVP
-              </button>
-            <% else %>
-              <%!-- Guest: show email form --%>
-              <.form for={@form} phx-change="validate" phx-submit="submit" class="space-y-3">
-                <div>
-                  <.input
-                    field={@form[:email]}
-                    type="email"
-                    placeholder="Enter your email"
-                    required
-                    class="input input-bordered w-full"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  class="btn btn-primary w-full"
-                  disabled={@submitting || !@form.source.valid?}
-                >
-                  <%= if @submitting do %>
-                    <span class="loading loading-spinner loading-sm"></span>
-                  <% else %>
-                    <.icon name="hero-hand-raised" class="w-5 h-5" />
-                  <% end %>
-                  RSVP
-                </button>
-                <p class="text-xs text-base-content/60 text-center">
-                  We'll send event updates to this email
-                </p>
-              </.form>
-            <% end %>
-          </div>
-      <% end %>
+        <%!-- Action area --%>
+        <div class="pt-3 border-t border-base-300">
+          <.rsvp_action_content
+            rsvp_status={rsvp_status(@existing_rsvp)}
+            current_user={@current_user}
+            submitting={@submitting}
+            form={@form}
+          />
+        </div>
+      </div>
     </div>
     """
   end
 
   defp attendance_mode_selector(assigns) do
+    assigns =
+      assigns
+      |> Map.put_new(:disabled, false)
+      |> Map.put_new(:has_rsvp, false)
+
     ~H"""
     <div class="flex gap-2">
       <button
         type="button"
-        phx-click="select_mode"
+        phx-click={if @has_rsvp, do: "update_attendance_mode", else: "select_mode"}
         phx-value-mode="in_person"
+        disabled={@disabled}
         class={[
           "btn btn-sm flex-1",
           if(@selected_mode == :in_person, do: "btn-primary", else: "btn-outline")
         ]}
       >
-        <.icon name="hero-map-pin" class="w-4 h-4" />
-        In Person
+        <.icon name="hero-map-pin" class="w-4 h-4" /> In Person
       </button>
       <button
         type="button"
-        phx-click="select_mode"
+        phx-click={if @has_rsvp, do: "update_attendance_mode", else: "select_mode"}
         phx-value-mode="online"
+        disabled={@disabled}
         class={[
           "btn btn-sm flex-1",
           if(@selected_mode == :online, do: "btn-primary", else: "btn-outline")
         ]}
       >
-        <.icon name="hero-video-camera" class="w-4 h-4" />
-        Online
+        <.icon name="hero-video-camera" class="w-4 h-4" /> Online
       </button>
     </div>
     """
@@ -343,5 +294,145 @@ defmodule OhioElixirWeb.RsvpLive do
       <% end %>
     </div>
     """
+  end
+
+  defp rsvp_action_content(assigns) do
+    ~H"""
+    <%= case @rsvp_status do %>
+      <% :already_rsvped -> %>
+        <div
+          id="rsvp-confirmed"
+          class="space-y-2"
+          phx-remove={
+            JS.transition(
+              {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
+              time: 150
+            )
+          }
+        >
+          <div class="flex items-center justify-center gap-2">
+            <.icon name="hero-check-circle" class="w-5 h-5 text-success" />
+            <span class="font-medium">You're going!</span>
+          </div>
+          <button
+            phx-click="cancel_rsvp"
+            class="btn btn-ghost btn-sm w-full text-base-content/60"
+            disabled={@submitting}
+          >
+            <%= if @submitting do %>
+              <span class="loading loading-spinner loading-sm"></span>
+            <% else %>
+              Cancel RSVP
+            <% end %>
+          </button>
+        </div>
+      <% :waitlisted -> %>
+        <div
+          id="rsvp-waitlisted"
+          class="text-center py-2"
+          phx-remove={
+            JS.transition(
+              {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
+              time: 150
+            )
+          }
+        >
+          <span class="badge badge-warning gap-2">
+            <.icon name="hero-clock" class="w-4 h-4" /> Waitlisted
+          </span>
+          <p class="text-sm text-base-content/60 mt-1">We'll notify you if a spot opens up</p>
+        </div>
+      <% :cancelled -> %>
+        <div
+          id="rsvp-cancelled"
+          class="text-center py-2"
+          phx-remove={
+            JS.transition(
+              {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
+              time: 150
+            )
+          }
+        >
+          <span class="text-base-content/70">RSVP cancelled</span>
+        </div>
+      <% :not_rsvped -> %>
+        <%= if @current_user do %>
+          <div
+            id="rsvp-button"
+            phx-remove={
+              JS.transition(
+                {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
+                time: 150
+              )
+            }
+          >
+            <button
+              phx-click="rsvp"
+              class="btn btn-primary w-full"
+              disabled={@submitting}
+            >
+              <%= if @submitting do %>
+                <span class="loading loading-spinner loading-sm"></span>
+              <% else %>
+                <.icon name="hero-hand-raised" class="w-5 h-5" />
+              <% end %>
+              RSVP
+            </button>
+          </div>
+        <% else %>
+          <%= if @form do %>
+            <.form
+              for={@form}
+              id="rsvp-form"
+              phx-change="validate"
+              phx-submit="submit"
+              class="space-y-3"
+              phx-remove={
+                JS.transition(
+                  {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
+                  time: 150
+                )
+              }
+            >
+              <div>
+                <.input
+                  field={@form[:email]}
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  class="input input-bordered w-full"
+                />
+              </div>
+              <button
+                type="submit"
+                class="btn btn-primary w-full"
+                disabled={@submitting || !@form.source.valid?}
+              >
+                <%= if @submitting do %>
+                  <span class="loading loading-spinner loading-sm"></span>
+                <% else %>
+                  <.icon name="hero-hand-raised" class="w-5 h-5" />
+                <% end %>
+                RSVP
+              </button>
+              <p class="text-xs text-base-content/60 text-center">
+                We'll send event updates to this email
+              </p>
+            </.form>
+          <% end %>
+        <% end %>
+      <% _ -> %>
+        <%!-- Loading state renders nothing --%>
+    <% end %>
+    """
+  end
+
+  defp get_existing_rsvp(nil, _event_id), do: nil
+
+  defp get_existing_rsvp(user, event_id) do
+    case Events.get_rsvp_by_user_and_event(user.id, event_id) do
+      {:ok, rsvp} -> rsvp
+      _ -> nil
+    end
   end
 end

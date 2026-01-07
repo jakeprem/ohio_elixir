@@ -3,22 +3,20 @@ defmodule OhioElixirWeb.EventController do
 
   alias OhioElixir.Events
 
+  plug OhioElixirWeb.Plugs.CacheControl
+
   def show(conn, %{"id" => id}) do
     current_user = conn.assigns[:current_user]
 
     case Events.get_event(id, load: [:venue, :rsvp_count]) do
       {:ok, event} ->
-        existing_rsvp =
-          if current_user do
-            case Events.get_rsvp_by_email_and_event(current_user.email, id) do
-              {:ok, rsvp} -> rsvp
-              _ -> nil
-            end
-          else
-            nil
-          end
+        existing_rsvp = get_existing_rsvp(current_user, id)
 
-        render(conn, :show, event: event, existing_rsvp: existing_rsvp)
+        render(conn, :show,
+          event: event,
+          existing_rsvp: existing_rsvp,
+          current_user: current_user
+        )
 
       {:error, %Ash.Error.Query.NotFound{}} ->
         conn
@@ -29,6 +27,15 @@ defmodule OhioElixirWeb.EventController do
         conn
         |> put_flash(:error, "Unable to load event")
         |> redirect(to: ~p"/")
+    end
+  end
+
+  defp get_existing_rsvp(nil, _event_id), do: nil
+
+  defp get_existing_rsvp(user, event_id) do
+    case Events.get_rsvp_by_user_and_event(user.id, event_id) do
+      {:ok, rsvp} -> rsvp
+      _ -> nil
     end
   end
 end

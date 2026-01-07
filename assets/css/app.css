@@ -11,6 +11,9 @@
    The heroicons installation itself is managed by your mix.exs */
 @plugin "../vendor/heroicons";
 
+/* tailwindcss-animate for smooth enter/exit animations */
+@plugin "tailwindcss-animate";
+
 /* daisyUI Tailwind Plugin. You can update this file by fetching the latest version with:
    curl -sLO https://github.com/saadeghi/daisyui/releases/latest/download/daisyui.js
    Make sure to look at the daisyUI changelog: https://daisyui.com/docs/changelog/ */
@@ -126,3 +129,4 @@
 
 /* Container max-width matching ohioelixir.com */
 .container-site { max-width: 1200px; }
+

@@ -3,6 +3,8 @@ defmodule OhioElixir.Events do
     otp_app: :ohio_elixir,
     extensions: [AshAdmin.Domain, AshJsonApi.Domain]
 
+  import Ash.Expr
+
   admin do
     show? true
   end
@@ -22,8 +24,17 @@ defmodule OhioElixir.Events do
 
     resource OhioElixir.Events.Event do
       define :list_events, action: :read
-      define :list_published_events, action: :list_published
-      define :list_upcoming_events, action: :list_upcoming
+
+      define :list_published_events,
+        action: :read,
+        default_options: [query: [filter: expr(status == :published), sort: [starts_at: :asc]]]
+
+      define :list_upcoming_events,
+        action: :read,
+        default_options: [
+          query: [filter: expr(status == :published and starts_at > now()), sort: [starts_at: :asc]]
+        ]
+
       define :get_event, action: :read, get_by: [:id]
       define :create_event, action: :create
       define :update_event, action: :update
@@ -35,7 +46,7 @@ defmodule OhioElixir.Events do
     resource OhioElixir.Events.Rsvp do
       define :rsvp_to_event, action: :rsvp, args: [:event_id]
       define :guest_rsvp_to_event, action: :guest_rsvp, args: [:event_id, :email]
-      define :get_rsvp_by_email_and_event, action: :get_by_email_and_event, args: [:email, :event_id]
+      define :get_rsvp_by_user_and_event, action: :get_by_user_and_event, args: [:user_id, :event_id]
       define :cancel_rsvp, action: :cancel
       define :mark_rsvp_attended, action: :mark_attended
       define :my_rsvps, action: :my_rsvps
