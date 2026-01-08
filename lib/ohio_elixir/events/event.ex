@@ -86,6 +86,17 @@ defmodule OhioElixir.Events.Event do
     end
   end
 
+  field_policies do
+    field_policy :* do
+      authorize_if always()
+    end
+
+    field_policy :meeting_url do
+      authorize_if actor_attribute_equals(:role, :admin)
+      authorize_if expr(exists(rsvps, user_id == ^actor(:id) and status == :confirmed))
+    end
+  end
+
   attributes do
     uuid_primary_key :id
 

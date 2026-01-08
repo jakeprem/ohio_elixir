@@ -6,7 +6,8 @@ defmodule OhioElixirWeb.PageController do
   plug OhioElixirWeb.Plugs.CacheControl
 
   def home(conn, _params) do
-    upcoming_events = Events.list_upcoming_events!(load: [:venue, :rsvp_count])
+    current_user = conn.assigns[:current_user]
+    upcoming_events = Events.list_upcoming_events!(actor: current_user)
     render(conn, :home, upcoming_events: upcoming_events)
   end
 end

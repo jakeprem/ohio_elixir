@@ -41,6 +41,7 @@ defmodule OhioElixir.Events.Rsvp do
       change relate_actor(:user)
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
+      change {OhioElixir.Events.Changes.ValidateEventUpcoming, []}
     end
 
     create :guest_rsvp do
@@ -57,6 +58,7 @@ defmodule OhioElixir.Events.Rsvp do
       change {OhioElixir.Events.Changes.FindOrCreateUserByEmail, []}
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
+      change {OhioElixir.Events.Changes.ValidateEventUpcoming, []}
     end
 
     update :update do

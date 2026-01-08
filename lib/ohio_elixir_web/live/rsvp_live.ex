@@ -18,7 +18,7 @@ defmodule OhioElixirWeb.RsvpLive do
     url_mode = parse_mode(session["mode"])
     current_user = socket.assigns[:current_user]
 
-    {:ok, event} = Events.get_event(event_id, load: [:venue])
+    {:ok, event} = Events.get_event(event_id, load: [:venue], actor: current_user)
     existing_rsvp = get_existing_rsvp(current_user, event_id)
 
     attendance_mode =
@@ -441,7 +441,7 @@ defmodule OhioElixirWeb.RsvpLive do
   defp get_existing_rsvp(nil, _event_id), do: nil
 
   defp get_existing_rsvp(user, event_id) do
-    case Events.get_rsvp_by_user_and_event(user.id, event_id) do
+    case Events.get_rsvp_by_user_and_event(user.id, event_id, actor: user) do
       {:ok, rsvp} -> rsvp
       _ -> nil
     end

@@ -9,17 +9,62 @@ defmodule OhioElixirWeb.EventHTML do
   embed_templates "event_html/*"
 
   @doc """
-  Check if meeting URL should be shown based on RSVP status and user role.
+  Renders an event card for the events list.
 
-  Returns true if:
-  - User is an admin
-  - User has a confirmed RSVP for the event
+  Expects the event to have the `:upcoming?` calculation loaded.
   """
-  def show_meeting_url?(existing_rsvp, current_user) do
-    cond do
-      current_user && current_user.role == :admin -> true
-      existing_rsvp && existing_rsvp.status == :confirmed -> true
-      true -> false
-    end
+  attr :event, :map, required: true
+
+  def event_card(assigns) do
+    assigns = assign(assigns, :upcoming?, assigns.event.upcoming?)
+
+    ~H"""
+    <div class="border border-base-300 hover:border-primary/50 transition-colors">
+      <div class="p-4 text-left">
+        <.link navigate={~p"/events/#{@event.id}"} class="block mb-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="text-sm text-base-content/50">
+              {format_date(@event.starts_at, @event.timezone)} · {format_time(
+                @event.starts_at,
+                @event.timezone
+              )}
+            </span>
+            <.format_badge format={@event.format} />
+            <%= if @event.status == :cancelled do %>
+              <span class="badge badge-error badge-sm">Cancelled</span>
+            <% end %>
+          </div>
+          <h4 class="text-lg font-bold mb-2">{@event.title}</h4>
+          <%= if @event.description do %>
+            <p class="text-base-content/60 text-sm line-clamp-2">
+              {String.slice(@event.description, 0, 200)}{if String.length(@event.description || "") >
+                                                              200,
+                                                            do: "..."}
+            </p>
+          <% end %>
+        </.link>
+        <%= if @upcoming? do %>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <%= if @event.format in [:in_person, :hybrid] do %>
+              <.link
+                navigate={~p"/events/#{@event.id}?mode=in_person"}
+                class="btn btn-primary btn-sm"
+              >
+                Join In Person
+              </.link>
+            <% end %>
+            <%= if @event.format in [:online, :hybrid] do %>
+              <.link
+                navigate={~p"/events/#{@event.id}?mode=online"}
+                class="btn btn-outline btn-primary btn-sm"
+              >
+                Join Online
+              </.link>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
   end
 end

@@ -126,6 +126,11 @@ defmodule OhioElixir.Accounts.User do
     policy action(:me) do
       authorize_if actor_present()
     end
+
+    # Allow admins to read users (for attendee lists, etc.)
+    policy action_type(:read) do
+      authorize_if actor_attribute_equals(:role, :admin)
+    end
   end
 
   attributes do

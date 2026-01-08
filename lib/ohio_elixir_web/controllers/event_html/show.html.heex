@@ -1,21 +1,27 @@
-<Layouts.flash_group flash={@flash} />
-
-<div class="min-h-screen">
-  <%!-- Navigation --%>
-  <Layouts.navbar current_user={@current_user} />
-
+<Layouts.app flash={@flash} current_user={@current_user}>
   <%!-- Event Header --%>
   <header class="border-b border-base-300 py-8">
     <div class="max-w-5xl mx-auto px-6">
       <div class="mb-4">
-        <.link navigate={~p"/"} class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm">
+        <.link navigate={~p"/events"} class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm">
           <.icon name="hero-arrow-left" class="w-4 h-4" />
           Back to events
         </.link>
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-4">{@event.title}</h1>
-      <div class="flex flex-wrap items-center gap-4">
+
+      <div class="flex flex-wrap items-center gap-2">
         <.format_badge format={@event.format} />
+        <%= if Ash.can?({@event, :update}, @current_user) do %>
+          <span class={[
+            "badge badge-sm",
+            @event.status == :draft && "badge-warning",
+            @event.status == :published && "badge-success",
+            @event.status == :cancelled && "badge-error"
+          ]}>
+            {Phoenix.Naming.humanize(@event.status)}
+          </span>
+        <% end %>
         <%= if @event.rsvp_count && @event.rsvp_count > 0 do %>
           <span class="flex items-center gap-1 text-base-content/60">
             <.icon name="hero-users" class="w-5 h-5" />
@@ -50,7 +56,7 @@
         </div>
 
         <%!-- Location --%>
-        <%= if @event.venue || @event.meeting_url do %>
+        <%= if @event.venue || @event.format in [:online, :hybrid] do %>
           <div class="border border-base-300 p-6">
             <h2 class="text-lg font-bold mb-4">Location</h2>
             <%= if @event.venue do %>
@@ -69,20 +75,23 @@
                 </div>
               </div>
             <% end %>
-            <%= if @event.meeting_url do %>
-              <div class="flex items-center gap-2 mt-4">
-                <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
-                <%= if show_meeting_url?(@existing_rsvp, @current_user) do %>
+            <%= if @event.format in [:online, :hybrid] do %>
+              <%= if is_binary(@event.meeting_url) do %>
+                <div class="flex items-center gap-2 mt-4">
+                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
                   <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
                     Join Online
                   </a>
-                <% else %>
+                </div>
+              <% else %>
+                <div class="flex items-center gap-2 mt-4">
+                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
                   <span class="text-base-content/50 flex items-center gap-1">
                     <.icon name="hero-lock-closed" class="w-4 h-4" />
                     RSVP to view link
                   </span>
-                <% end %>
-              </div>
+                </div>
+              <% end %>
             <% end %>
           </div>
         <% end %>
@@ -98,8 +107,64 @@
         <% end %>
       </div>
 
-      <%!-- Sidebar with RSVP --%>
-      <div class="md:col-span-1">
+      <%!-- Sidebar --%>
+      <div class="md:col-span-1 space-y-6">
+        <%!-- Admin Controls --%>
+        <%= if Ash.can?({@event, :update}, @current_user) do %>
+          <div class="border border-base-300 p-6">
+            <h2 class="text-lg font-bold mb-4">Manage Event</h2>
+            <div class="space-y-3">
+              <.link navigate={~p"/events/#{@event.id}/edit"} class="btn btn-outline btn-sm w-full">
+                <.icon name="hero-pencil" class="w-4 h-4" />
+                Edit Event
+              </.link>
+              <%= if @event.status == :draft and Ash.can?({@event, :publish}, @current_user) do %>
+                <.link
+                  href={~p"/events/#{@event.id}/publish"}
+                  method="post"
+                  class="btn btn-success btn-sm w-full"
+                >
+                  <.icon name="hero-check-circle" class="w-4 h-4" />
+                  Publish Event
+                </.link>
+              <% end %>
+              <%= if @event.status == :published and Ash.can?({@event, :cancel}, @current_user) do %>
+                <.link
+                  href={~p"/events/#{@event.id}/cancel"}
+                  method="post"
+                  class="btn btn-error btn-outline btn-sm w-full"
+                  data-confirm="Are you sure you want to cancel this event?"
+                >
+                  <.icon name="hero-x-circle" class="w-4 h-4" />
+                  Cancel Event
+                </.link>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%!-- Attendee List - only shows if rsvps loaded (Ash policies filter for non-admins) --%>
+        <%= if @event.rsvps != [] do %>
+          <div class="border border-base-300 p-6">
+            <h2 class="text-lg font-bold mb-4">
+              Attendees ({length(@event.rsvps)})
+            </h2>
+            <ul class="space-y-2">
+              <%= for rsvp <- @event.rsvps do %>
+                <li class="flex items-center justify-between text-sm">
+                  <span>{rsvp.user.email}</span>
+                  <%= if rsvp.attendance_mode do %>
+                    <span class="badge badge-xs">
+                      {Phoenix.Naming.humanize(rsvp.attendance_mode)}
+                    </span>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <%!-- RSVP Box --%>
         <%= live_render(@conn, OhioElixirWeb.RsvpLive,
           id: "rsvp-#{@event.id}",
           session: %{"event_id" => @event.id, "mode" => @mode}
@@ -107,4 +172,4 @@
       </div>
     </div>
   </div>
-</div>
+</Layouts.app>

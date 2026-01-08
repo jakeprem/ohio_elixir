@@ -38,6 +38,9 @@ defmodule OhioElixirWeb.Router do
       #
       # If an authenticated user must *not* be present:
       # on_mount {OhioElixirWeb.LiveUserAuth, :live_no_user}
+
+      live "/events/new", EventFormLive, :new
+      live "/events/:id/edit", EventFormLive, :edit
     end
   end
 
@@ -55,7 +58,10 @@ defmodule OhioElixirWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/events", EventController, :index
     get "/events/:id", EventController, :show
+    post "/events/:id/publish", EventController, :publish
+    post "/events/:id/cancel", EventController, :cancel
 
     auth_routes AuthController, OhioElixir.Accounts.User, path: "/auth"
     sign_out_route AuthController

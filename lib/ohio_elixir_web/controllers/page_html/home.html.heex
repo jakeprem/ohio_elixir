@@ -32,7 +32,12 @@
   <%!-- Upcoming Events Section --%>
   <section id="events" class="scroll-mt-5">
     <div class="max-w-5xl mx-auto px-6 py-8">
-      <h3 class="text-2xl font-bold mb-6">Upcoming Events</h3>
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold">Upcoming Events</h3>
+        <.link navigate={~p"/events"} class="text-primary hover:underline text-sm">
+          View all events
+        </.link>
+      </div>
 
       <%= if @upcoming_events == [] do %>
         <div class="border border-base-300 p-8 text-center">
@@ -59,18 +64,20 @@
                     </p>
                   <% end %>
                 </.link>
-                <div class="flex flex-col sm:flex-row gap-2">
-                  <%= if event.format in [:in_person, :hybrid] do %>
-                    <.link navigate={~p"/events/#{event.id}?mode=in_person"} class="btn btn-primary btn-sm">
-                      Join In Person
-                    </.link>
-                  <% end %>
-                  <%= if event.format in [:online, :hybrid] do %>
-                    <.link navigate={~p"/events/#{event.id}?mode=online"} class="btn btn-outline btn-primary btn-sm">
-                      Join Online
-                    </.link>
-                  <% end %>
-                </div>
+                <%= if event.upcoming? do %>
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <%= if event.format in [:in_person, :hybrid] do %>
+                      <.link navigate={~p"/events/#{event.id}?mode=in_person"} class="btn btn-primary btn-sm">
+                        Join In Person
+                      </.link>
+                    <% end %>
+                    <%= if event.format in [:online, :hybrid] do %>
+                      <.link navigate={~p"/events/#{event.id}?mode=online"} class="btn btn-outline btn-primary btn-sm">
+                        Join Online
+                      </.link>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
             </div>
           <% end %>
@@ -117,44 +124,5 @@
     </div>
   </section>
 
-  <%!-- Footer / Join Section --%>
-  <footer id="join" class="bg-base-200 border-t border-base-300 py-16">
-    <div class="max-w-5xl mx-auto px-6">
-      <div class="max-w-2xl mx-auto text-center">
-        <h3 class="text-2xl font-bold mb-4">Join Our Community</h3>
-        <p class="text-base-content/60 mb-8">
-          Connect with Ohio Elixir developers and stay updated on upcoming meetups.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <a
-            href="https://discord.gg/JVVSwSNpK6"
-            class="btn btn-primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Join Discord
-          </a>
-          <a
-            href="https://github.com/ohio-elixir"
-            class="btn btn-outline btn-primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://bsky.app/profile/ohioelixir.bsky.social"
-            class="btn btn-outline btn-primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Bluesky
-          </a>
-        </div>
-        <div class="border-t border-base-300 pt-8">
-          <p class="text-sm text-base-content/50">© 2025 Ohio Elixir Community</p>
-        </div>
-      </div>
-    </div>
-  </footer>
+  <Layouts.footer />
 </div>

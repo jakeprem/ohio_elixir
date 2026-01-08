@@ -1,0 +1,50 @@
+<Layouts.app flash={@flash} current_user={@current_user}>
+  <header class="py-8">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="text-3xl font-bold">Events</h1>
+        <%= if Ash.can?({OhioElixir.Events.Event, :create}, @current_user) do %>
+          <.link navigate={~p"/events/new"} class="btn btn-primary">
+            <.icon name="hero-plus" class="w-5 h-5" />
+            Create Event
+          </.link>
+        <% end %>
+      </div>
+
+      <div class="tabs tabs-boxed bg-base-200 w-fit">
+        <.link
+          navigate={~p"/events?view=upcoming"}
+          class={["tab", @current_view == "upcoming" && "tab-active"]}
+        >
+          Upcoming
+        </.link>
+        <.link
+          navigate={~p"/events?view=past"}
+          class={["tab", @current_view == "past" && "tab-active"]}
+        >
+          Past Events
+        </.link>
+      </div>
+    </div>
+  </header>
+
+  <section class="max-w-5xl mx-auto px-6 pb-8">
+    <%= if @events == [] do %>
+      <div class="border border-base-300 p-8 text-center">
+        <p class="text-base-content/60">
+          <%= if @current_view == "past" do %>
+            No past events found.
+          <% else %>
+            No upcoming events scheduled. Check back soon!
+          <% end %>
+        </p>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <%= for event <- @events do %>
+          <.event_card event={event} />
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+</Layouts.app>

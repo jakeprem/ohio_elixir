@@ -26,48 +26,18 @@ defmodule OhioElixirWeb.Layouts do
 
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
-
-  attr :current_scope, :map,
-    default: nil,
-    doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
-
+  attr :current_user, :any, default: nil, doc: "the current user"
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </header>
-
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <div class="min-h-screen flex flex-col">
+      <.navbar current_user={@current_user} />
+      <main class="flex-1">
         {render_slot(@inner_block)}
-      </div>
-    </main>
-
+      </main>
+      <.footer />
+    </div>
     <.flash_group flash={@flash} />
     """
   end
@@ -172,10 +142,10 @@ defmodule OhioElixirWeb.Layouts do
           <a href="/" class="hover:text-primary transition-colors">Ohio Elixir</a>
         </h1>
         <div class="flex items-center space-x-8">
-          <a href="#about" class="text-base-content/70 hover:text-base-content transition-colors">
+          <a href="/#about" class="text-base-content/70 hover:text-base-content transition-colors">
             About
           </a>
-          <a href="#events" class="text-base-content/70 hover:text-base-content transition-colors">
+          <a href="/events" class="text-base-content/70 hover:text-base-content transition-colors">
             Events
           </a>
           <a href="#join" class="text-base-content/70 hover:text-base-content transition-colors">
@@ -184,7 +154,7 @@ defmodule OhioElixirWeb.Layouts do
           <.theme_toggle />
           <div class="flex items-center gap-4">
             <%= if @current_user do %>
-              <span class="text-base-content/70 text-sm"><%= @current_user.email %></span>
+              <span class="text-base-content/70 text-sm">{@current_user.email}</span>
               <a href="/sign-out" class="btn btn-ghost btn-sm">Sign Out</a>
             <% else %>
               <a href="/sign-in" class="btn btn-primary btn-sm">Sign In</a>
@@ -193,6 +163,57 @@ defmodule OhioElixirWeb.Layouts do
         </div>
       </div>
     </nav>
+    """
+  end
+
+  @doc """
+  Renders the site footer with community links.
+
+  ## Examples
+
+      <Layouts.footer />
+  """
+  def footer(assigns) do
+    ~H"""
+    <footer id="join" class="bg-base-200 border-t border-base-300 py-16">
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="max-w-2xl mx-auto text-center">
+          <h3 class="text-2xl font-bold mb-4">Join Our Community</h3>
+          <p class="text-base-content/60 mb-8">
+            Connect with Ohio Elixir developers and stay updated on upcoming meetups.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <a
+              href="https://discord.gg/JVVSwSNpK6"
+              class="btn btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Join Discord
+            </a>
+            <a
+              href="https://github.com/ohio-elixir"
+              class="btn btn-outline btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://bsky.app/profile/ohioelixir.bsky.social"
+              class="btn btn-outline btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Bluesky
+            </a>
+          </div>
+          <div class="border-t border-base-300 pt-8">
+            <p class="text-sm text-base-content/50">© 2025 Ohio Elixir Community</p>
+          </div>
+        </div>
+      </div>
+    </footer>
     """
   end
 end

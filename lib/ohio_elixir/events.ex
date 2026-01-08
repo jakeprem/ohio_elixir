@@ -32,7 +32,21 @@ defmodule OhioElixir.Events do
       define :list_upcoming_events,
         action: :read,
         default_options: [
-          query: [filter: expr(visible? and starts_at > now()), sort: [starts_at: :asc]]
+          query: [
+            filter: expr(visible? and starts_at > now()),
+            sort: [starts_at: :asc],
+            load: [:venue, :rsvp_count, :upcoming?]
+          ]
+        ]
+
+      define :list_past_events,
+        action: :read,
+        default_options: [
+          query: [
+            filter: expr(visible? and starts_at <= now()),
+            sort: [starts_at: :desc],
+            load: [:venue, :rsvp_count, :upcoming?]
+          ]
         ]
 
       define :get_event, action: :read, get_by: [:id]
