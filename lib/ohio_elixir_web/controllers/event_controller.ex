@@ -5,7 +5,9 @@ defmodule OhioElixirWeb.EventController do
 
   plug OhioElixirWeb.Plugs.CacheControl
 
-  def show(conn, %{"id" => id}) do
+  def show(conn, params) do
+    id = params["id"]
+    mode = params["mode"]
     current_user = conn.assigns[:current_user]
 
     case Events.get_event(id, load: [:venue, :rsvp_count]) do
@@ -15,7 +17,8 @@ defmodule OhioElixirWeb.EventController do
         render(conn, :show,
           event: event,
           existing_rsvp: existing_rsvp,
-          current_user: current_user
+          current_user: current_user,
+          mode: mode
         )
 
       {:error, %Ash.Error.Query.NotFound{}} ->

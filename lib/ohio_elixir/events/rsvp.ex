@@ -101,12 +101,10 @@ defmodule OhioElixir.Events.Rsvp do
       authorize_if always()
     end
 
-    # General read - admin can read all, users can read own, anyone can read confirmed RSVPs
-    # (confirmed RSVPs are public - you're publicly saying you're attending)
+    # General read - admin can read all, users can read own
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
       authorize_if relates_to_actor_via(:user)
-      authorize_if expr(status == :confirmed)
     end
 
     # Create RSVP - any logged-in user

@@ -15,6 +15,7 @@ defmodule OhioElixirWeb.RsvpLive do
   @impl true
   def mount(_params, session, socket) do
     event_id = session["event_id"]
+    url_mode = parse_mode(session["mode"])
     current_user = socket.assigns[:current_user]
 
     {:ok, event} = Events.get_event(event_id, load: [:venue])
@@ -22,6 +23,7 @@ defmodule OhioElixirWeb.RsvpLive do
 
     attendance_mode =
       (existing_rsvp && existing_rsvp.attendance_mode) ||
+        validate_mode_for_format(url_mode, event.format) ||
         default_attendance_mode(event.format)
 
     socket =
@@ -38,6 +40,15 @@ defmodule OhioElixirWeb.RsvpLive do
 
     {:ok, socket}
   end
+
+  defp parse_mode("in_person"), do: :in_person
+  defp parse_mode("online"), do: :online
+  defp parse_mode(_), do: nil
+
+  defp validate_mode_for_format(nil, _format), do: nil
+  defp validate_mode_for_format(:in_person, format) when format in [:in_person, :hybrid], do: :in_person
+  defp validate_mode_for_format(:online, format) when format in [:online, :hybrid], do: :online
+  defp validate_mode_for_format(_mode, _format), do: nil
 
   defp default_attendance_mode(:online), do: :online
   defp default_attendance_mode(format) when format in [:in_person, :hybrid], do: :in_person

@@ -6,6 +6,8 @@ defmodule OhioElixir.Events.Event do
     authorizers: [Ash.Policy.Authorizer],
     extensions: [AshAdmin.Resource, AshJsonApi.Resource]
 
+  @visible_event_statuses [:published, :cancelled]
+
   sqlite do
     table "events"
     repo OhioElixir.Repo
@@ -36,7 +38,6 @@ defmodule OhioElixir.Events.Event do
       accept :*
       validate {OhioElixir.Events.Validations.RequiresLocationForFormat, []}
     end
-
 
     create :create do
       description "Create a new event in draft status."
@@ -77,7 +78,7 @@ defmodule OhioElixir.Events.Event do
   policies do
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
-      authorize_if expr(status == :published)
+      authorize_if expr(visible?)
     end
 
     policy action_type([:create, :update, :destroy]) do
@@ -145,7 +146,8 @@ defmodule OhioElixir.Events.Event do
   end
 
   calculations do
-    calculate :rsvp_count, :integer,
+    calculate :rsvp_count,
+              :integer,
               expr(
                 fragment(
                   "(SELECT COUNT(*) FROM event_rsvps WHERE event_id = ? AND status = 'confirmed')",
@@ -153,6 +155,7 @@ defmodule OhioElixir.Events.Event do
                 )
               )
 
+    calculate :visible?, :boolean, expr(status in @visible_event_statuses)
     calculate :upcoming?, :boolean, expr(starts_at > now())
     calculate :past?, :boolean, expr(starts_at <= now())
   end

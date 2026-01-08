@@ -102,7 +102,7 @@
       <div class="md:col-span-1">
         <%= live_render(@conn, OhioElixirWeb.RsvpLive,
           id: "rsvp-#{@event.id}",
-          session: %{"event_id" => @event.id}
+          session: %{"event_id" => @event.id, "mode" => @mode}
         ) %>
       </div>
     </div>

@@ -33,7 +33,7 @@ defmodule OhioElixir.Accounts.User.Senders.SendMagicLinkEmail do
 
     """
     <p>Hello, #{params[:email]}! Click this link to sign in:</p>
-    <p><a href="#{url}">#{url}</a></p>
+    <p><a href="#{url}" target="_blank">#{url}</a></p>
     """
   end
 end

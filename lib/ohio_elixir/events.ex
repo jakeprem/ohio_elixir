@@ -27,12 +27,12 @@ defmodule OhioElixir.Events do
 
       define :list_published_events,
         action: :read,
-        default_options: [query: [filter: expr(status == :published), sort: [starts_at: :asc]]]
+        default_options: [query: [filter: expr(visible?), sort: [starts_at: :asc]]]
 
       define :list_upcoming_events,
         action: :read,
         default_options: [
-          query: [filter: expr(status == :published and starts_at > now()), sort: [starts_at: :asc]]
+          query: [filter: expr(visible? and starts_at > now()), sort: [starts_at: :asc]]
         ]
 
       define :get_event, action: :read, get_by: [:id]
