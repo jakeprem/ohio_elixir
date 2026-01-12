@@ -1,0 +1,21 @@
+dbs:
+  - path: /mnt/data/ohio_elixir.db
+    replicas:
+      - type: s3
+        bucket: ${BUCKET_NAME}
+        path: ohio_elixir
+        endpoint: ${AWS_ENDPOINT_URL_S3}
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+        region: auto
+
+        # Sync interval: 60s = ~43,200 syncs/month if always running
+        # With auto_stop_machines, actual usage will be much lower
+        sync-interval: 60s
+
+        # Snapshot every 24 hours (reduces PUT requests vs default 1h)
+        snapshot-interval: 24h
+
+        # Keep 3 days of snapshots (minimizes storage and LIST operations)
+        retention: 72h
+        retention-check-interval: 1h

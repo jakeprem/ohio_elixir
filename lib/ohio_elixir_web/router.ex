@@ -54,6 +54,11 @@ defmodule OhioElixirWeb.Router do
     forward "/", OhioElixirWeb.AshJsonApiRouter
   end
 
+  # Health check endpoint for Fly.io (no browser pipeline needed)
+  scope "/", OhioElixirWeb do
+    get "/health", HealthController, :index
+  end
+
   scope "/", OhioElixirWeb do
     pipe_through :browser
 
