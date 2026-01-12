@@ -86,6 +86,8 @@ defmodule OhioElixirWeb do
       import Phoenix.HTML
       # Core UI components
       import OhioElixirWeb.CoreComponents
+      # Markdown rendering
+      import OhioElixirWeb.Markdown
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

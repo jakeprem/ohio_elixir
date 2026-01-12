@@ -1,0 +1,102 @@
+/* Syntax highlighting for code blocks using Autumn themes
+ * Light mode: github_light
+ * Dark mode: github_dark
+ *
+ * These styles are applied to code blocks rendered by MDEx with html_linked formatter.
+ * The themes are scoped to [data-theme=light] and [data-theme=dark] selectors.
+ */
+
+/* ============================================
+ * Light Mode - github_light theme
+ * ============================================ */
+[data-theme="light"] pre.athl {
+  color: #1f2328;
+  background-color: #f6f8fa;
+}
+[data-theme="light"] pre.athl .attribute { color: #0550ae; }
+[data-theme="light"] pre.athl .boolean { color: #0550ae; }
+[data-theme="light"] pre.athl .character { color: #0a3069; }
+[data-theme="light"] pre.athl .comment { color: #57606a; }
+[data-theme="light"] pre.athl .constant { color: #0550ae; }
+[data-theme="light"] pre.athl .constant-builtin { color: #0550ae; }
+[data-theme="light"] pre.athl .constructor { color: #953800; }
+[data-theme="light"] pre.athl .function { color: #6639ba; }
+[data-theme="light"] pre.athl .function-call { color: #6639ba; }
+[data-theme="light"] pre.athl .function-macro { color: #6639ba; }
+[data-theme="light"] pre.athl .function-method { color: #6639ba; }
+[data-theme="light"] pre.athl .keyword { color: #cf222e; }
+[data-theme="light"] pre.athl .label { color: #116329; }
+[data-theme="light"] pre.athl .module { color: #953800; }
+[data-theme="light"] pre.athl .number { color: #0550ae; }
+[data-theme="light"] pre.athl .operator { color: #0550ae; }
+[data-theme="light"] pre.athl .property { color: #0550ae; }
+[data-theme="light"] pre.athl .punctuation-bracket { color: #1f2328; }
+[data-theme="light"] pre.athl .punctuation-delimiter { color: #1f2328; }
+[data-theme="light"] pre.athl .punctuation-special { color: #1f2328; }
+[data-theme="light"] pre.athl .string { color: #0a3069; }
+[data-theme="light"] pre.athl .string-escape { color: #0a3069; font-weight: bold; }
+[data-theme="light"] pre.athl .string-special-symbol { color: #0550ae; }
+[data-theme="light"] pre.athl .tag { color: #116329; }
+[data-theme="light"] pre.athl .tag-attribute { color: #0550ae; }
+[data-theme="light"] pre.athl .type { color: #953800; }
+[data-theme="light"] pre.athl .variable { color: #1f2328; }
+[data-theme="light"] pre.athl .variable-builtin { color: #0550ae; }
+[data-theme="light"] pre.athl .variable-parameter { color: #1f2328; }
+[data-theme="light"] pre.athl .highlighted { background-color: #e7eaf0; }
+
+/* ============================================
+ * Dark Mode - github_dark theme
+ * ============================================ */
+[data-theme="dark"] pre.athl {
+  color: #e6edf3;
+  background-color: #161b22;
+}
+[data-theme="dark"] pre.athl .attribute { color: #79c0ff; }
+[data-theme="dark"] pre.athl .boolean { color: #79c0ff; }
+[data-theme="dark"] pre.athl .character { color: #a5d6ff; }
+[data-theme="dark"] pre.athl .comment { color: #8b949e; }
+[data-theme="dark"] pre.athl .constant { color: #79c0ff; }
+[data-theme="dark"] pre.athl .constant-builtin { color: #79c0ff; }
+[data-theme="dark"] pre.athl .constructor { color: #ffa657; }
+[data-theme="dark"] pre.athl .function { color: #d2a8ff; }
+[data-theme="dark"] pre.athl .function-call { color: #d2a8ff; }
+[data-theme="dark"] pre.athl .function-macro { color: #d2a8ff; }
+[data-theme="dark"] pre.athl .function-method { color: #d2a8ff; }
+[data-theme="dark"] pre.athl .keyword { color: #ff7b72; }
+[data-theme="dark"] pre.athl .label { color: #7ee787; }
+[data-theme="dark"] pre.athl .module { color: #ffa657; }
+[data-theme="dark"] pre.athl .number { color: #79c0ff; }
+[data-theme="dark"] pre.athl .operator { color: #79c0ff; }
+[data-theme="dark"] pre.athl .property { color: #79c0ff; }
+[data-theme="dark"] pre.athl .punctuation-bracket { color: #e6edf3; }
+[data-theme="dark"] pre.athl .punctuation-delimiter { color: #e6edf3; }
+[data-theme="dark"] pre.athl .punctuation-special { color: #e6edf3; }
+[data-theme="dark"] pre.athl .string { color: #a5d6ff; }
+[data-theme="dark"] pre.athl .string-escape { color: #a5d6ff; font-weight: bold; }
+[data-theme="dark"] pre.athl .string-special-symbol { color: #79c0ff; }
+[data-theme="dark"] pre.athl .tag { color: #7ee787; }
+[data-theme="dark"] pre.athl .tag-attribute { color: #79c0ff; }
+[data-theme="dark"] pre.athl .type { color: #ffa657; }
+[data-theme="dark"] pre.athl .variable { color: #e6edf3; }
+[data-theme="dark"] pre.athl .variable-builtin { color: #79c0ff; }
+[data-theme="dark"] pre.athl .variable-parameter { color: #e6edf3; }
+[data-theme="dark"] pre.athl .highlighted { background-color: #484f58; }
+
+/* ============================================
+ * Shared styles for code blocks
+ * ============================================ */
+pre.athl {
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+pre.athl code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+pre.athl .line {
+  display: block;
+}

@@ -100,9 +100,7 @@
         <%= if @event.description do %>
           <div class="border border-base-300 p-6">
             <h2 class="text-lg font-bold mb-4">About this event</h2>
-            <div class="prose prose-sm max-w-none text-base-content/80">
-              <p class="whitespace-pre-wrap">{@event.description}</p>
-            </div>
+            <.markdown content={@event.description} class="text-base-content/80" />
           </div>
         <% end %>
       </div>

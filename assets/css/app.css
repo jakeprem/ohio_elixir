@@ -21,6 +21,9 @@
   themes: false;
 }
 
+/* Typography plugin for prose styles (markdown rendering) */
+@plugin "@tailwindcss/typography";
+
 /* Ohio Elixir Theme - Light Mode
    Clean white background with purple accents matching ohioelixir.com */
 @plugin "../vendor/daisyui-theme" {
@@ -123,6 +126,9 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Syntax highlighting themes for code blocks (light/dark mode) */
+@import "./syntax-highlight.css";
 
 /* DM Sans font family */
 .font-dm { font-family: 'DM Sans', sans-serif; }
