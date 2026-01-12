@@ -24,6 +24,10 @@ defmodule OhioElixirWeb.Router do
     plug :set_actor, :user
   end
 
+  pipeline :require_auth do
+    plug OhioElixirWeb.Plugs.RequireAuth
+  end
+
   scope "/", OhioElixirWeb do
     pipe_through :browser
 
@@ -59,14 +63,20 @@ defmodule OhioElixirWeb.Router do
     get "/health", HealthController, :index
   end
 
+  # Routes that require authentication
+  scope "/", OhioElixirWeb do
+    pipe_through [:browser, :require_auth]
+
+    post "/events/:id/publish", EventController, :publish
+    post "/events/:id/cancel", EventController, :cancel
+  end
+
   scope "/", OhioElixirWeb do
     pipe_through :browser
 
     get "/", PageController, :home
     get "/events", EventController, :index
     get "/events/:id", EventController, :show
-    post "/events/:id/publish", EventController, :publish
-    post "/events/:id/cancel", EventController, :cancel
 
     auth_routes AuthController, OhioElixir.Accounts.User, path: "/auth"
     sign_out_route AuthController
@@ -76,16 +86,19 @@ defmodule OhioElixirWeb.Router do
                   reset_path: "/reset",
                   auth_routes_prefix: "/auth",
                   on_mount: [{OhioElixirWeb.LiveUserAuth, :live_no_user}],
-                  overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
+                  overrides: [
+                    OhioElixirWeb.AuthOverrides,
+                    AshAuthentication.Phoenix.Overrides.DaisyUI
+                  ]
 
     # Remove this if you do not want to use the reset password feature
-    reset_route auth_routes_prefix: "/auth",
-                overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
+    # reset_route auth_routes_prefix: "/auth",
+    #             overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
 
     # Remove this if you do not use the confirmation strategy
-    confirm_route OhioElixir.Accounts.User, :confirm_new_user,
-      auth_routes_prefix: "/auth",
-      overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
+    # confirm_route OhioElixir.Accounts.User, :confirm_new_user,
+    #   auth_routes_prefix: "/auth",
+    #   overrides: [OhioElixirWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.DaisyUI]
 
     # Magic link callback is handled by auth_routes above.
     # The magic_sign_in_route is disabled due to a bug in ash_authentication_phoenix 2.13.1
