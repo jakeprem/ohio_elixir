@@ -103,21 +103,14 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Here is an example configuration for Mailgun:
-  #
-  #     config :ohio_elixir, OhioElixir.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
-  # and Finch out-of-the-box. This configuration is typically done at
-  # compile-time in your config/prod.exs:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Req
-  #
-  # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+  # Configuring the mailer with Brevo
+  brevo_api_key = System.fetch_env!("BREVO_API_KEY")
+
+  if brevo_api_key == "" do
+    raise "BREVO_API_KEY is set but empty"
+  end
+
+  config :ohio_elixir, OhioElixir.Mailer,
+    adapter: Swoosh.Adapters.Brevo,
+    api_key: brevo_api_key
 end

@@ -21,7 +21,7 @@ defmodule OhioElixir.Accounts.User.Senders.SendMagicLinkEmail do
       end
 
     new()
-    |> from({"Ohio Elixir", "ohioelixir@gmail.com"})
+    |> from({"Ohio Elixir", "noreply@ohioelixir.com"})
     |> to(to_string(email))
     |> subject("Your login link")
     |> html_body(body(token: token, email: email))
