@@ -139,13 +139,13 @@ defmodule OhioElixirWeb.Layouts do
     <nav class="bg-base-100 border-b border-base-300 py-6">
       <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
         <h1 class="text-xl font-bold mb-4 md:mb-0">
-          <a href="/" class="hover:text-primary transition-colors">Ohio Elixir</a>
+          <a href="/" data-instant class="hover:text-primary transition-colors">Ohio Elixir</a>
         </h1>
         <div class="flex items-center space-x-8">
           <a href="/#about" class="text-base-content/70 hover:text-base-content transition-colors">
             About
           </a>
-          <a href="/events" class="text-base-content/70 hover:text-base-content transition-colors">
+          <a href="/events" data-instant class="text-base-content/70 hover:text-base-content transition-colors">
             Events
           </a>
           <a href="#join" class="text-base-content/70 hover:text-base-content transition-colors">

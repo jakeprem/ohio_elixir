@@ -6,5 +6,7 @@ defmodule OhioElixirWeb.PageHTML do
   """
   use OhioElixirWeb, :html
 
+  alias OhioElixirWeb.EventHTML
+
   embed_templates "page_html/*"
 end

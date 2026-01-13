@@ -44,7 +44,8 @@
       })();
     </script>
   </head>
-  <body class="font-dm bg-base-100 text-base-content">
+  <body data-instant-whitelist class="font-dm bg-base-100 text-base-content">
     {@inner_content}
+    <script src={~p"/js/prefetch.js"} type="module"></script>
   </body>
 </html>

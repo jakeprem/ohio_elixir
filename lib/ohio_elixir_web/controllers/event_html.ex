@@ -21,7 +21,7 @@ defmodule OhioElixirWeb.EventHTML do
     ~H"""
     <div class="border border-base-300 hover:border-primary/50 transition-colors">
       <div class="p-4 text-left">
-        <.link navigate={~p"/events/#{@event.id}"} class="block mb-4">
+        <.link href={~p"/events/#{@event.id}"} data-instant class="block mb-4">
           <div class="flex flex-wrap items-center gap-2 mb-2">
             <span class="text-sm text-base-content/50">
               {format_date(@event.starts_at, @event.timezone)} · {format_time(

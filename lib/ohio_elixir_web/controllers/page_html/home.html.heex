@@ -34,7 +34,7 @@
     <div class="max-w-5xl mx-auto px-6 py-8">
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-bold">Upcoming Events</h3>
-        <.link navigate={~p"/events"} class="text-primary hover:underline text-sm">
+        <.link href={~p"/events"} data-instant class="text-primary hover:underline text-sm">
           View all events
         </.link>
       </div>
@@ -46,40 +46,7 @@
       <% else %>
         <div class="space-y-4">
           <%= for event <- @upcoming_events do %>
-            <div class="border border-base-300 hover:border-primary/50 transition-colors">
-              <div class="p-4 text-left">
-                <.link navigate={~p"/events/#{event.id}"} class="block mb-4">
-                  <div class="text-sm text-base-content/50 mb-2">
-                    {format_date(event.starts_at, event.timezone)} · {format_time(
-                      event.starts_at,
-                      event.timezone
-                    )}
-                  </div>
-                  <h4 class="text-lg font-bold mb-2">{event.title}</h4>
-                  <%= if event.description do %>
-                    <p class="text-base-content/60 text-sm line-clamp-2">
-                      {String.slice(event.description, 0, 200)}{if String.length(
-                                                                     event.description || ""
-                                                                   ) > 200, do: "..."}
-                    </p>
-                  <% end %>
-                </.link>
-                <%= if event.upcoming? do %>
-                  <div class="flex flex-col sm:flex-row gap-2">
-                    <%= if event.format in [:in_person, :hybrid] do %>
-                      <.link navigate={~p"/events/#{event.id}?mode=in_person"} class="btn btn-primary btn-sm">
-                        Join In Person
-                      </.link>
-                    <% end %>
-                    <%= if event.format in [:online, :hybrid] do %>
-                      <.link navigate={~p"/events/#{event.id}?mode=online"} class="btn btn-outline btn-primary btn-sm">
-                        Join Online
-                      </.link>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-            </div>
+            <EventHTML.event_card event={event} />
           <% end %>
         </div>
       <% end %>
@@ -105,11 +72,15 @@
         <div class="grid grid-cols-2 border border-base-300">
           <div class="p-6 border-r border-b border-base-300">
             <h4 class="text-lg font-bold mb-3">Monthly Meetups</h4>
-            <p class="text-base-content/60 text-sm">Regular gatherings with talks and discussions</p>
+            <p class="text-base-content/60 text-sm">
+              Regular gatherings with talks and discussions
+            </p>
           </div>
           <div class="p-6 border-b border-base-300">
             <h4 class="text-lg font-bold mb-3">Remote First</h4>
-            <p class="text-base-content/60 text-sm">Accessible to developers across Ohio and beyond</p>
+            <p class="text-base-content/60 text-sm">
+              Accessible to developers across Ohio and beyond
+            </p>
           </div>
           <div class="p-6 border-r border-base-300">
             <h4 class="text-lg font-bold mb-3">Show & Tell</h4>
