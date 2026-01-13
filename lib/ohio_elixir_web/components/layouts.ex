@@ -123,46 +123,241 @@ defmodule OhioElixirWeb.Layouts do
   end
 
   @doc """
-  Renders the site navbar matching ohioelixir.com style.
+  Renders a user avatar with Gravatar support and initials fallback.
+  """
+  attr :user, :any, required: true
+  attr :class, :string, default: "w-10"
 
-  Auth state is handled client-side via data-auth-* attributes for cacheability.
-  See assets/js/app.js for the Auth module that hydrates these elements.
+  def user_avatar(assigns) do
+    ~H"""
+    <%= if @user.preferences && @user.preferences.use_gravatar do %>
+      <div class="avatar">
+        <div class={"#{@class} rounded-full"}>
+          <img
+            src={gravatar_url(@user.email)}
+            alt={user_initials(@user)}
+            onerror={"this.parentElement.parentElement.outerHTML = '<div class=\"avatar avatar-placeholder\"><div class=\"bg-primary text-primary-content #{@class} rounded-full\"><span>' + '#{user_initials(@user)}' + '</span></div></div>'"}
+          />
+        </div>
+      </div>
+    <% else %>
+      <div class="avatar avatar-placeholder">
+        <div class={"bg-primary text-primary-content #{@class} rounded-full"}>
+          <span>{user_initials(@user)}</span>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
 
-  ## Examples
+  defp gravatar_url(email) do
+    hash =
+      :crypto.hash(:md5, String.downcase(String.trim(to_string(email))))
+      |> Base.encode16(case: :lower)
 
-      <Layouts.navbar />
+    "https://www.gravatar.com/avatar/#{hash}?d=404&s=80"
+  end
+
+  defp user_initials(user) do
+    cond do
+      user.first_name && user.last_name ->
+        String.first(user.first_name) <> String.first(user.last_name)
+
+      user.first_name ->
+        String.first(user.first_name)
+
+      true ->
+        user.email |> to_string() |> String.first() |> String.upcase()
+    end
+  end
+
+  defp display_name(user) do
+    cond do
+      user.first_name && user.last_name ->
+        "#{user.first_name} #{user.last_name}"
+
+      user.first_name ->
+        user.first_name
+
+      true ->
+        user.email |> to_string() |> String.split("@") |> hd()
+    end
+  end
+
+  @doc """
+  Renders the user menu dropdown for desktop navigation.
+  """
+  attr :current_user, :any, default: nil
+
+  def user_menu(assigns) do
+    ~H"""
+    <%= if @current_user do %>
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="cursor-pointer">
+          <.user_avatar user={@current_user} class="w-10" />
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 p-2 shadow-lg border border-base-300 mt-2"
+        >
+          <li class="menu-title px-4 py-2 text-left">
+            <div class="font-medium text-base-content">{display_name(@current_user)}</div>
+            <div class="text-xs text-base-content/60 font-normal">{@current_user.email}</div>
+          </li>
+          <li>
+            <a href="/profile" class="flex items-center gap-2">
+              <.icon name="hero-user" class="size-4" /> Profile
+            </a>
+          </li>
+          <li>
+            <a href="/sign-out" class="flex items-center gap-2">
+              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Sign Out
+            </a>
+          </li>
+          <li class="mt-2 pt-2 border-t border-base-300">
+            <div class="flex items-center justify-between hover:bg-transparent cursor-default">
+              <span class="text-sm text-base-content/70">Theme</span>
+              <.theme_toggle />
+            </div>
+          </li>
+        </ul>
+      </div>
+    <% else %>
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+          <.icon name="hero-bars-3" class="size-5" />
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 p-2 shadow-lg border border-base-300 mt-2"
+        >
+          <li>
+            <a href="/sign-in" class="flex items-center gap-2">
+              <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Sign In
+            </a>
+          </li>
+          <li class="mt-2 pt-2 border-t border-base-300">
+            <div class="flex items-center justify-between hover:bg-transparent cursor-default">
+              <span class="text-sm text-base-content/70">Theme</span>
+              <.theme_toggle />
+            </div>
+          </li>
+        </ul>
+      </div>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Renders the site navbar with responsive drawer for mobile.
   """
   attr :current_user, :any, default: nil
 
   def navbar(assigns) do
     ~H"""
-    <nav class="bg-base-100 border-b border-base-300 py-6">
-      <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-        <h1 class="text-xl font-bold mb-4 md:mb-0">
-          <a href="/" data-instant class="hover:text-primary transition-colors">Ohio Elixir</a>
-        </h1>
-        <div class="flex items-center space-x-8">
-          <a href="/#about" class="text-base-content/70 hover:text-base-content transition-colors">
-            About
-          </a>
-          <a href="/events" data-instant class="text-base-content/70 hover:text-base-content transition-colors">
-            Events
-          </a>
-          <a href="#join" class="text-base-content/70 hover:text-base-content transition-colors">
-            Join
-          </a>
-          <.theme_toggle />
-          <div class="flex items-center gap-4">
-            <%= if @current_user do %>
-              <span class="text-base-content/70 text-sm">{@current_user.email}</span>
-              <a href="/sign-out" class="btn btn-ghost btn-sm">Sign Out</a>
-            <% else %>
-              <a href="/sign-in" class="btn btn-primary btn-sm">Sign In</a>
-            <% end %>
+    <div class="drawer drawer-end">
+      <input id="mobile-drawer" type="checkbox" class="drawer-toggle" />
+
+      <div class="drawer-content flex flex-col">
+        <!-- Desktop navbar (hidden on mobile) -->
+        <nav class="hidden md:block bg-base-100 border-b border-base-300">
+          <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" data-instant class="text-xl font-bold hover:text-primary transition-colors">
+              Ohio Elixir
+            </a>
+            <div class="flex items-center gap-6">
+              <a
+                href="/#about"
+                class="text-base-content/70 hover:text-base-content transition-colors"
+              >
+                About
+              </a>
+              <a
+                href="/events"
+                data-instant
+                class="text-base-content/70 hover:text-base-content transition-colors"
+              >
+                Events
+              </a>
+              <a href="#join" class="text-base-content/70 hover:text-base-content transition-colors">
+                Join
+              </a>
+              <.user_menu current_user={@current_user} />
+            </div>
+          </div>
+        </nav>
+        <!-- Mobile navbar (visible on mobile only) -->
+        <nav class="md:hidden bg-base-100 border-b border-base-300">
+          <div class="px-4 py-3 flex justify-between items-center">
+            <a href="/" data-instant class="text-xl font-bold hover:text-primary transition-colors">
+              Ohio Elixir
+            </a>
+            <label for="mobile-drawer" class="btn btn-ghost btn-square btn-sm">
+              <.icon name="hero-bars-3" class="size-6" />
+            </label>
+          </div>
+        </nav>
+      </div>
+      <!-- Mobile drawer sidebar (opens from right) -->
+      <div class="drawer-side z-50">
+        <label for="mobile-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <div class="bg-base-200 min-h-full w-80 p-4">
+          <div class="flex justify-between items-center mb-6">
+            <label for="mobile-drawer" class="btn btn-ghost btn-sm btn-square">
+              <.icon name="hero-x-mark" class="size-5" />
+            </label>
+            <span class="text-lg font-bold">Menu</span>
+          </div>
+
+          <ul class="menu p-0 space-y-1">
+            <li>
+              <a href="/#about" class="text-base">About</a>
+            </li>
+            <li>
+              <a href="/events" data-instant class="text-base">Events</a>
+            </li>
+            <li>
+              <a href="#join" class="text-base">Join</a>
+            </li>
+          </ul>
+
+          <div class="divider"></div>
+
+          <%= if @current_user do %>
+            <div class="flex items-center gap-3 mb-4 px-2">
+              <.user_avatar user={@current_user} class="w-12" />
+              <div>
+                <div class="font-medium">{display_name(@current_user)}</div>
+                <div class="text-sm text-base-content/60">{@current_user.email}</div>
+              </div>
+            </div>
+            <ul class="menu p-0 space-y-1">
+              <li>
+                <a href="/profile" class="text-base">
+                  <.icon name="hero-user" class="size-5" /> Profile
+                </a>
+              </li>
+              <li>
+                <a href="/sign-out" class="text-base">
+                  <.icon name="hero-arrow-right-on-rectangle" class="size-5" /> Sign Out
+                </a>
+              </li>
+            </ul>
+          <% else %>
+            <div class="px-2">
+              <a href="/sign-in" class="btn btn-primary w-full">Sign In</a>
+            </div>
+          <% end %>
+
+          <div class="divider"></div>
+
+          <div class="flex items-center justify-between px-2">
+            <span class="text-sm text-base-content/70">Theme</span>
+            <.theme_toggle />
           </div>
         </div>
       </div>
-    </nav>
+    </div>
     """
   end
 

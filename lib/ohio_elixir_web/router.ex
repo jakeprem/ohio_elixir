@@ -43,6 +43,7 @@ defmodule OhioElixirWeb.Router do
       # If an authenticated user must *not* be present:
       # on_mount {OhioElixirWeb.LiveUserAuth, :live_no_user}
 
+      live "/profile", ProfileLive
       live "/events/new", EventFormLive, :new
       live "/events/:id/edit", EventFormLive, :edit
     end

@@ -112,6 +112,11 @@ defmodule OhioElixir.Accounts.User do
 
       run AshAuthentication.Strategy.MagicLink.Request
     end
+
+    update :update_profile do
+      description "Update user profile information"
+      accept [:first_name, :last_name, :preferences]
+    end
   end
 
   policies do
@@ -131,6 +136,11 @@ defmodule OhioElixir.Accounts.User do
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
     end
+
+    # Users can update their own profile
+    policy action(:update_profile) do
+      authorize_if expr(id == ^actor(:id))
+    end
   end
 
   attributes do
@@ -146,6 +156,22 @@ defmodule OhioElixir.Accounts.User do
       default :user
       public? true
       constraints one_of: [:user, :admin]
+    end
+
+    attribute :first_name, :string do
+      allow_nil? true
+      public? true
+    end
+
+    attribute :last_name, :string do
+      allow_nil? true
+      public? true
+    end
+
+    attribute :preferences, OhioElixir.Accounts.UserPreferences do
+      allow_nil? false
+      default %{}
+      public? true
     end
   end
 
