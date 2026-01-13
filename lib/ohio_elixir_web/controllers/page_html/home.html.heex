@@ -29,25 +29,21 @@
     </div>
   </header>
 
-  <%!-- Upcoming Events Section --%>
+  <%!-- Next Event Section --%>
   <section id="events" class="scroll-mt-5">
     <div class="max-w-5xl mx-auto px-6 py-8">
       <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-bold">Upcoming Events</h3>
+        <h3 class="text-xl font-bold">Next Event</h3>
         <.link href={~p"/events"} data-instant class="text-primary hover:underline text-sm">
           View all events
         </.link>
       </div>
 
-      <%= if @upcoming_events == [] do %>
+      <%= if @next_event do %>
+        <EventHTML.event_card event={@next_event} />
+      <% else %>
         <div class="border border-base-300 p-8 text-center">
           <p class="text-base-content/60">No upcoming events scheduled. Check back soon!</p>
-        </div>
-      <% else %>
-        <div class="space-y-4">
-          <%= for event <- @upcoming_events do %>
-            <EventHTML.event_card event={event} />
-          <% end %>
         </div>
       <% end %>
     </div>

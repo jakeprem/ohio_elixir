@@ -4,7 +4,30 @@ defmodule OhioElixir.Accounts.User do
     domain: OhioElixir.Accounts,
     data_layer: AshSqlite.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshAuthentication, AshJsonApi.Resource]
+    extensions: [AshAuthentication, AshJsonApi.Resource, AshRateLimiter]
+
+  rate_limit do
+    hammer OhioElixir.RateLimiter
+
+    action :request_magic_link,
+      limit: 5,
+      per: :timer.minutes(1),
+      key: fn input, context ->
+        email = Ash.ActionInput.get_argument(input, :email) |> to_string()
+
+        # Get IP from AshAuthentication's request context
+        # Falls back to x_forwarded_for for proxy support
+        auth_context = context[:ash_authentication_request] || %{}
+
+        ip =
+          case auth_context[:x_forwarded_for] do
+            [forwarded | _] -> forwarded |> String.split(",") |> List.first() |> String.trim()
+            _ -> auth_context[:remote_ip] || "unknown"
+          end
+
+        "magic_link:#{ip}:#{email}"
+      end
+  end
 
   sqlite do
     table "users"

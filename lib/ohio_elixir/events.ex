@@ -33,7 +33,7 @@ defmodule OhioElixir.Events do
         action: :read,
         default_options: [
           query: [
-            filter: expr(visible? and starts_at > now()),
+            filter: expr(starts_at > now()),
             sort: [starts_at: :asc],
             load: [:venue, :rsvp_count, :upcoming?]
           ]
@@ -43,7 +43,7 @@ defmodule OhioElixir.Events do
         action: :read,
         default_options: [
           query: [
-            filter: expr(visible? and starts_at <= now()),
+            filter: expr(starts_at <= now()),
             sort: [starts_at: :desc],
             load: [:venue, :rsvp_count, :upcoming?]
           ]

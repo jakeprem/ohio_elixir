@@ -94,7 +94,7 @@ past_event =
     actor: admin
   )
 
-past_event = Events.publish_event!(past_event, actor: admin)
+Events.publish_event!(past_event, actor: admin)
 IO.puts("Created past event: #{past_event.title}")
 
 # Upcoming in-person event
@@ -125,7 +125,7 @@ upcoming_inperson =
     actor: admin
   )
 
-upcoming_inperson = Events.publish_event!(upcoming_inperson, actor: admin)
+Events.publish_event!(upcoming_inperson, actor: admin)
 IO.puts("Created upcoming event: #{upcoming_inperson.title}")
 
 # Upcoming hybrid event
@@ -156,18 +156,26 @@ upcoming_hybrid =
     actor: admin
   )
 
-upcoming_hybrid = Events.publish_event!(upcoming_hybrid, actor: admin)
+Events.publish_event!(upcoming_hybrid, actor: admin)
 IO.puts("Created upcoming event: #{upcoming_hybrid.title}")
 
-# Create RSVPs
-Events.rsvp_to_event!(upcoming_inperson.id, actor: user)
-IO.puts("Created RSVP for #{user.email} to #{upcoming_inperson.title}")
+# Create RSVPs - use the event structs directly since they have IDs
+IO.puts("Creating RSVPs...")
+IO.puts("upcoming_inperson.id = #{inspect(upcoming_inperson.id)}")
+IO.puts("upcoming_hybrid.id = #{inspect(upcoming_hybrid.id)}")
 
-Events.rsvp_to_event!(upcoming_hybrid.id, actor: user)
-IO.puts("Created RSVP for #{user.email} to #{upcoming_hybrid.title}")
+if upcoming_inperson.id do
+  Events.rsvp_to_event!(upcoming_inperson.id, actor: user)
+  IO.puts("Created RSVP for #{user.email} to #{upcoming_inperson.title}")
+end
 
-Events.rsvp_to_event!(upcoming_hybrid.id, actor: admin)
-IO.puts("Created RSVP for #{admin.email} to #{upcoming_hybrid.title}")
+if upcoming_hybrid.id do
+  Events.rsvp_to_event!(upcoming_hybrid.id, actor: user)
+  IO.puts("Created RSVP for #{user.email} to #{upcoming_hybrid.title}")
+
+  Events.rsvp_to_event!(upcoming_hybrid.id, actor: admin)
+  IO.puts("Created RSVP for #{admin.email} to #{upcoming_hybrid.title}")
+end
 
 IO.puts("\nSeed data created successfully!")
 IO.puts("Admin user: admin@ohioelixir.org")

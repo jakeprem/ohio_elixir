@@ -84,7 +84,9 @@ defmodule OhioElixir.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:mdex, "~> 0.11"}
+      {:mdex, "~> 0.11"},
+      {:hammer, "~> 7.0"},
+      {:ash_rate_limiter, "~> 0.2"}
     ]
   end
 

@@ -7,7 +7,16 @@ defmodule OhioElixirWeb.PageController do
 
   def home(conn, _params) do
     current_user = conn.assigns[:current_user]
-    upcoming_events = Events.list_upcoming_events!(actor: current_user)
-    render(conn, :home, upcoming_events: upcoming_events)
+
+    next_event =
+      case Events.list_upcoming_events!(%{visible_only: true},
+             actor: current_user,
+             query: [limit: 1]
+           ) do
+        [event] -> event
+        [] -> nil
+      end
+
+    render(conn, :home, next_event: next_event)
   end
 end

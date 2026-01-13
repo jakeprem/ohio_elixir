@@ -10,6 +10,7 @@ defmodule OhioElixir.Application do
     children = [
       OhioElixirWeb.Telemetry,
       OhioElixir.Repo,
+      {OhioElixir.RateLimiter, clean_period: :timer.minutes(1)},
       {Ecto.Migrator,
        repos: Application.fetch_env!(:ohio_elixir, :ecto_repos), skip: skip_migrations?()},
       {Oban,

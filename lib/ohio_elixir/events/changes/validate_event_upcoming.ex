@@ -19,7 +19,12 @@ defmodule OhioElixir.Events.Changes.ValidateEventUpcoming do
   @impl true
   def change(changeset, _opts, _context) do
     Ash.Changeset.before_action(changeset, fn changeset ->
-      case Ash.Changeset.get_attribute(changeset, :event_id) do
+      # Check argument first (used by rsvp action), then attribute (used by guest_rsvp)
+      event_id =
+        Ash.Changeset.get_argument(changeset, :event_id) ||
+          Ash.Changeset.get_attribute(changeset, :event_id)
+
+      case event_id do
         nil ->
           Ash.Changeset.add_error(changeset, field: :event_id, message: "event_id is required")
 

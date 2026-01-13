@@ -4,7 +4,8 @@ defmodule OhioElixir.Events.Event do
     domain: OhioElixir.Events,
     data_layer: AshSqlite.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshAdmin.Resource, AshJsonApi.Resource]
+    extensions: [AshAdmin.Resource, AshJsonApi.Resource],
+    primary_read_warning?: false
 
   @visible_event_statuses [:published, :cancelled]
 
@@ -30,7 +31,16 @@ defmodule OhioElixir.Events.Event do
   end
 
   actions do
-    defaults [:read, :destroy]
+    defaults [:destroy]
+
+    read :read do
+      primary? true
+      argument :visible_only, :boolean, default: false
+
+      prepare build(filter: expr(visible?)) do
+        where argument_equals(:visible_only, true)
+      end
+    end
 
     update :update do
       primary? true
@@ -46,6 +56,7 @@ defmodule OhioElixir.Events.Event do
       accept [
         :title,
         :description,
+        :short_description,
         :format,
         :starts_at,
         :ends_at,
@@ -107,6 +118,7 @@ defmodule OhioElixir.Events.Event do
     end
 
     attribute :description, :string, public?: true, constraints: [max_length: 10_000]
+    attribute :short_description, :string, public?: true, constraints: [max_length: 300]
 
     attribute :status, :atom do
       allow_nil? false

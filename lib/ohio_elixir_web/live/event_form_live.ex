@@ -195,10 +195,6 @@ defmodule OhioElixirWeb.EventFormLive do
           <div class="border border-base-300 p-6 space-y-4">
             <h2 class="text-lg font-bold">Basic Information</h2>
 
-            <.input field={@form[:title]} label="Title" required />
-
-            <.input field={@form[:description]} type="textarea" label="Description" rows="5" />
-
             <.input
               field={@form[:format]}
               type="select"
@@ -209,6 +205,18 @@ defmodule OhioElixirWeb.EventFormLive do
                 {"Hybrid", :hybrid}
               ]}
             />
+
+            <.input field={@form[:title]} label="Title" required />
+
+            <.input
+              field={@form[:short_description]}
+              type="textarea"
+              label="Short Description"
+              rows="2"
+              placeholder="Brief summary for event cards (max 300 chars)"
+            />
+
+            <.input field={@form[:description]} type="textarea" label="Description" rows="5" />
           </div>
 
           <div class="border border-base-300 p-6 space-y-4">

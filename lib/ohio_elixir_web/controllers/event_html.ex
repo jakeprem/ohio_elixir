@@ -30,17 +30,24 @@ defmodule OhioElixirWeb.EventHTML do
               )}
             </span>
             <.format_badge format={@event.format} />
+            <%= if @event.status == :draft do %>
+              <span class="badge badge-warning badge-sm">Draft</span>
+            <% end %>
             <%= if @event.status == :cancelled do %>
               <span class="badge badge-error badge-sm">Cancelled</span>
             <% end %>
           </div>
           <h4 class="text-lg font-bold mb-2">{@event.title}</h4>
-          <%= if @event.description do %>
-            <p class="text-base-content/60 text-sm line-clamp-2">
-              {String.slice(@event.description, 0, 200)}{if String.length(@event.description || "") >
-                                                              200,
-                                                            do: "..."}
-            </p>
+          <%= if @event.short_description do %>
+            <p class="text-base-content/60 text-sm line-clamp-2">{@event.short_description}</p>
+          <% else %>
+            <%= if @event.description do %>
+              <p class="text-base-content/60 text-sm line-clamp-2">
+                {String.slice(@event.description, 0, 200)}{if String.length(@event.description || "") >
+                                                                200,
+                                                              do: "..."}
+              </p>
+            <% end %>
           <% end %>
         </.link>
         <%= if @upcoming? do %>

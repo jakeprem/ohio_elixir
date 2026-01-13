@@ -4,6 +4,6 @@ defmodule OhioElixirWeb.PageControllerTest do
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
     assert html_response(conn, 200) =~ "Ohio Elixir"
-    assert html_response(conn, 200) =~ "Upcoming Events"
+    assert html_response(conn, 200) =~ "Next Event"
   end
 end
