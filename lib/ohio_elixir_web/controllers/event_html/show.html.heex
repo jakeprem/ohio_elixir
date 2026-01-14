@@ -77,11 +77,14 @@
             <% end %>
             <%= if @event.format in [:online, :hybrid] do %>
               <%= if is_binary(@event.meeting_url) do %>
-                <div class="flex items-center gap-2 mt-4">
-                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
-                  <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
-                    Join Online
-                  </a>
+                <div class="flex items-start gap-2 mt-4">
+                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70 mt-0.5" />
+                  <div>
+                    <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
+                      Join Online
+                    </a>
+                    <p class="text-sm text-base-content/60 break-all">{truncate_url(@event.meeting_url, 80)}</p>
+                  </div>
                 </div>
               <% else %>
                 <div class="flex items-center gap-2 mt-4">
@@ -143,22 +146,58 @@
 
         <%!-- Attendee List - only shows if rsvps loaded (Ash policies filter for non-admins) --%>
         <%= if @event.rsvps != [] do %>
+          <%
+            {in_person, online, unspecified} =
+              Enum.reduce(@event.rsvps, {[], [], []}, fn rsvp, {ip, on, un} ->
+                case rsvp.attendance_mode do
+                  :in_person -> {[rsvp | ip], on, un}
+                  :online -> {ip, [rsvp | on], un}
+                  _ -> {ip, on, [rsvp | un]}
+                end
+              end)
+          %>
           <div class="border border-base-300 p-6">
             <h2 class="text-lg font-bold mb-4">
               Attendees ({length(@event.rsvps)})
             </h2>
-            <ul class="space-y-2">
-              <%= for rsvp <- @event.rsvps do %>
-                <li class="flex items-center justify-between text-sm">
-                  <span>{rsvp.user.email}</span>
-                  <%= if rsvp.attendance_mode do %>
-                    <span class="badge badge-xs">
-                      {Phoenix.Naming.humanize(rsvp.attendance_mode)}
-                    </span>
-                  <% end %>
-                </li>
+            <div class="space-y-4">
+              <%= if in_person != [] do %>
+                <div>
+                  <h3 class="text-sm font-semibold text-base-content/70 border-b border-base-300 pb-1 mb-2">
+                    In Person ({length(in_person)})
+                  </h3>
+                  <ul class="space-y-1">
+                    <%= for rsvp <- Enum.reverse(in_person) do %>
+                      <li class="text-sm">{format_attendee_name(rsvp.user)}</li>
+                    <% end %>
+                  </ul>
+                </div>
               <% end %>
-            </ul>
+              <%= if online != [] do %>
+                <div>
+                  <h3 class="text-sm font-semibold text-base-content/70 border-b border-base-300 pb-1 mb-2">
+                    Online ({length(online)})
+                  </h3>
+                  <ul class="space-y-1">
+                    <%= for rsvp <- Enum.reverse(online) do %>
+                      <li class="text-sm">{format_attendee_name(rsvp.user)}</li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+              <%= if unspecified != [] do %>
+                <div>
+                  <h3 class="text-sm font-semibold text-base-content/70 border-b border-base-300 pb-1 mb-2">
+                    Unspecified ({length(unspecified)})
+                  </h3>
+                  <ul class="space-y-1">
+                    <%= for rsvp <- Enum.reverse(unspecified) do %>
+                      <li class="text-sm">{format_attendee_name(rsvp.user)}</li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
           </div>
         <% end %>
 

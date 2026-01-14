@@ -41,6 +41,7 @@ defmodule OhioElixir.Events.Rsvp do
       change relate_actor(:user)
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
+      change {OhioElixir.Events.Changes.SetDefaultAttendanceMode, []}
       change {OhioElixir.Events.Changes.ValidateEventUpcoming, []}
     end
 
@@ -58,6 +59,7 @@ defmodule OhioElixir.Events.Rsvp do
       change {OhioElixir.Events.Changes.FindOrCreateUserByEmail, []}
       change manage_relationship(:event_id, :event, type: :append)
       change set_attribute(:status, :confirmed)
+      change {OhioElixir.Events.Changes.SetDefaultAttendanceMode, []}
       change {OhioElixir.Events.Changes.ValidateEventUpcoming, []}
     end
 

@@ -78,11 +78,6 @@ defmodule OhioElixir.Accounts.User do
       filter expr(id == ^actor(:id))
     end
 
-    create :seed do
-      description "Create a user for seeding purposes (no authentication)"
-      accept [:email, :role]
-    end
-
     create :find_or_create_by_email do
       description "Find or create user by email for guest RSVP"
       argument :email, :ci_string, allow_nil?: false

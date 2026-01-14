@@ -3,8 +3,6 @@ defmodule OhioElixir.Events do
     otp_app: :ohio_elixir,
     extensions: [AshAdmin.Domain, AshJsonApi.Domain]
 
-  import Ash.Expr
-
   admin do
     show? true
   end
@@ -23,31 +21,9 @@ defmodule OhioElixir.Events do
     end
 
     resource OhioElixir.Events.Event do
-      define :list_events, action: :read
-
-      define :list_published_events,
+      define :list_events,
         action: :read,
-        default_options: [query: [filter: expr(visible?), sort: [starts_at: :asc]]]
-
-      define :list_upcoming_events,
-        action: :read,
-        default_options: [
-          query: [
-            filter: expr(starts_at > now()),
-            sort: [starts_at: :asc],
-            load: [:venue, :rsvp_count, :upcoming?]
-          ]
-        ]
-
-      define :list_past_events,
-        action: :read,
-        default_options: [
-          query: [
-            filter: expr(starts_at <= now()),
-            sort: [starts_at: :desc],
-            load: [:venue, :rsvp_count, :upcoming?]
-          ]
-        ]
+        default_options: [load: [:venue, :rsvp_count, :upcoming?]]
 
       define :get_event, action: :read, get_by: [:id]
       define :create_event, action: :create

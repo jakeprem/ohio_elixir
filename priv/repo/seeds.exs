@@ -6,33 +6,12 @@
 
 alias OhioElixir.{Accounts, Events}
 
-# Helper to get or create a user
-defmodule Seeds do
-  def get_or_create_user(email, role) do
-    require Ash.Query
-
-    case Accounts.User
-         |> Ash.Query.filter(email == ^email)
-         |> Ash.read_one!(authorize?: false) do
-      nil ->
-        user =
-          Accounts.User
-          |> Ash.Changeset.for_create(:seed, %{email: email, role: role})
-          |> Ash.create!(authorize?: false)
-
-        IO.puts("Created user: #{user.email}")
-        user
-
-      user ->
-        IO.puts("User already exists: #{user.email}")
-        user
-    end
-  end
-end
-
 # Create users
-admin = Seeds.get_or_create_user("admin@ohioelixir.org", :admin)
-user = Seeds.get_or_create_user("user@example.com", :user)
+admin = Ash.Seed.seed!(Accounts.User, %{email: "admin@ohioelixir.com", role: :admin})
+IO.puts("Seeded user: #{admin.email}")
+
+user = Ash.Seed.seed!(Accounts.User, %{email: "user@example.com", role: :user})
+IO.puts("Seeded user: #{user.email}")
 
 # Create venues
 improving_columbus =
@@ -178,5 +157,5 @@ if upcoming_hybrid.id do
 end
 
 IO.puts("\nSeed data created successfully!")
-IO.puts("Admin user: admin@ohioelixir.org")
+IO.puts("Admin user: admin@ohioelixir.com")
 IO.puts("Regular user: user@example.com")

@@ -8,12 +8,9 @@ defmodule OhioElixirWeb.EventController do
   def index(conn, params) do
     view = params["view"] || "upcoming"
     current_user = conn.assigns[:current_user]
+    time_filter = if view == "past", do: :past, else: :upcoming
 
-    events =
-      case view do
-        "past" -> Events.list_past_events!(actor: current_user)
-        _ -> Events.list_upcoming_events!(actor: current_user)
-      end
+    events = Events.list_events!(%{time_filter: time_filter}, actor: current_user)
 
     render(conn, :index, events: events, current_view: view)
   end
