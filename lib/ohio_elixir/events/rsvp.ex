@@ -14,10 +14,13 @@ defmodule OhioElixir.Events.Rsvp do
   json_api do
     type "rsvp"
 
+    includes user: []
+
     routes do
       base "/rsvps"
 
       index :my_rsvps, route: "/mine"
+      index :event_rsvps, route: "/events/:event_id"
       post :rsvp
       patch :cancel, route: "/:id/cancel"
       patch :mark_attended, route: "/:id/attended"
@@ -92,6 +95,13 @@ defmodule OhioElixir.Events.Rsvp do
       get? true
       filter expr(user_id == ^arg(:user_id) and event_id == ^arg(:event_id))
     end
+
+    read :event_rsvps do
+      description "List all RSVPs for a specific event (admin only)."
+      argument :event_id, :uuid, allow_nil?: false
+      filter expr(event_id == ^arg(:event_id))
+      prepare build(load: [:user])
+    end
   end
 
   policies do
@@ -137,6 +147,11 @@ defmodule OhioElixir.Events.Rsvp do
     policy action(:mark_attended) do
       authorize_if actor_attribute_equals(:role, :admin)
     end
+
+    # List event RSVPs - admin only
+    policy action(:event_rsvps) do
+      authorize_if actor_attribute_equals(:role, :admin)
+    end
   end
 
   attributes do
@@ -166,6 +181,7 @@ defmodule OhioElixir.Events.Rsvp do
     belongs_to :user, OhioElixir.Accounts.User do
       allow_nil? false
       attribute_writable? true
+      public? true
     end
   end
 

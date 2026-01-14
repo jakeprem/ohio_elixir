@@ -52,6 +52,9 @@ defmodule OhioElixirWeb.Router do
   scope "/api" do
     pipe_through [:api]
 
+    # CLI auth polling endpoint (no auth required - code is the auth)
+    get "/cli/auth/poll", OhioElixirWeb.CliAuthController, :poll
+
     forward "/swaggerui", OpenApiSpex.Plug.SwaggerUI,
       path: "/api/open_api",
       default_model_expand_depth: 4
@@ -77,6 +80,14 @@ defmodule OhioElixirWeb.Router do
 
     post "/events/:id/publish", EventController, :publish
     post "/events/:id/cancel", EventController, :cancel
+  end
+
+  # CLI authentication routes
+  scope "/cli", OhioElixirWeb do
+    pipe_through :browser
+
+    get "/auth", CliAuthController, :start
+    get "/auth/callback", CliAuthController, :callback
   end
 
   scope "/", OhioElixirWeb do
