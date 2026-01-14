@@ -36,9 +36,21 @@ defmodule OhioElixir.Events.Event do
     read :read do
       primary? true
       argument :visible_only, :boolean, default: false
+      argument :time_filter, :atom do
+        constraints one_of: [:all, :upcoming, :past]
+        default :all
+      end
 
       prepare build(filter: expr(visible?)) do
         where argument_equals(:visible_only, true)
+      end
+
+      prepare build(filter: expr(starts_at > now()), sort: [starts_at: :asc]) do
+        where argument_equals(:time_filter, :upcoming)
+      end
+
+      prepare build(filter: expr(starts_at <= now()), sort: [starts_at: :desc]) do
+        where argument_equals(:time_filter, :past)
       end
     end
 
@@ -162,6 +174,7 @@ defmodule OhioElixir.Events.Event do
 
     belongs_to :venue, OhioElixir.Events.Venue do
       allow_nil? true
+      public? true
       attribute_writable? true
     end
 
@@ -181,5 +194,14 @@ defmodule OhioElixir.Events.Event do
     calculate :visible?, :boolean, expr(status in @visible_event_statuses)
     calculate :upcoming?, :boolean, expr(starts_at > now())
     calculate :past?, :boolean, expr(starts_at <= now())
+
+    # RSVPs are open until end_time (or 2 hours after start if no end_time)
+    calculate :rsvps_open?, :boolean, expr(
+      if is_nil(ends_at) do
+        datetime_add(starts_at, 2, :hour) > now()
+      else
+        ends_at > now()
+      end
+    )
   end
 end

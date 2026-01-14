@@ -524,6 +524,81 @@ defmodule OhioElixirWeb.CoreComponents do
   end
 
   @doc """
+  Truncates a URL for display.
+
+  With no max_length, shows just the host. With a max_length, shows as much
+  of the URL as fits, adding "..." if truncated.
+
+  ## Examples
+
+      iex> truncate_url("https://zoom.us/j/123456789")
+      "zoom.us/..."
+
+      iex> truncate_url("https://meet.google.com/abc-defg-hij", 80)
+      "https://meet.google.com/abc-defg-hij"
+
+      iex> truncate_url("https://teams.microsoft.com/very/long/url...", 50)
+      "https://teams.microsoft.com/very/long/url..."
+  """
+  def truncate_url(url, max_length \\ nil)
+
+  def truncate_url(url, nil) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{host: host} when is_binary(host) -> "#{host}/..."
+      _ -> url
+    end
+  end
+
+  def truncate_url(url, max_length) when is_binary(url) and is_integer(max_length) do
+    if String.length(url) <= max_length do
+      url
+    else
+      String.slice(url, 0, max_length - 3) <> "..."
+    end
+  end
+
+  def truncate_url(_, _), do: ""
+
+  @doc """
+  Formats an attendee name for display.
+
+  Shows "First L." if both names available, "First" if only first name,
+  or empty string if no name. Always appends email in parentheses.
+
+  ## Examples
+
+      iex> format_attendee_name(%{first_name: "Michael", last_name: "Scott", email: "michael@dm.com"})
+      "Michael S. (michael@dm.com)"
+
+      iex> format_attendee_name(%{first_name: "Dwight", last_name: nil, email: "dwight@dm.com"})
+      "Dwight (dwight@dm.com)"
+
+      iex> format_attendee_name(%{first_name: nil, last_name: nil, email: "user@dm.com"})
+      "user@dm.com"
+  """
+  def format_attendee_name(user) do
+    name_part =
+      case {user.first_name, user.last_name} do
+        {first, last} when is_binary(first) and is_binary(last) and last != "" ->
+          "#{first} #{String.first(last)}."
+
+        {first, _} when is_binary(first) and first != "" ->
+          first
+
+        _ ->
+          nil
+      end
+
+    email = to_string(user.email)
+
+    if name_part do
+      "#{name_part} (#{email})"
+    else
+      email
+    end
+  end
+
+  @doc """
   Renders a badge showing the event format (in_person, online, hybrid).
   """
   attr :format, :atom, required: true

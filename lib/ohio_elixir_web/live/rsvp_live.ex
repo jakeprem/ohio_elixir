@@ -18,7 +18,7 @@ defmodule OhioElixirWeb.RsvpLive do
     url_mode = parse_mode(session["mode"])
     current_user = socket.assigns[:current_user]
 
-    {:ok, event} = Events.get_event(event_id, load: [:venue], actor: current_user)
+    {:ok, event} = Events.get_event(event_id, load: [:venue, :rsvps_open?], actor: current_user)
     existing_rsvp = get_existing_rsvp(current_user, event_id)
 
     attendance_mode =
@@ -34,7 +34,8 @@ defmodule OhioElixirWeb.RsvpLive do
         existing_rsvp: existing_rsvp,
         form: nil,
         submitting: false,
-        attendance_mode: attendance_mode
+        attendance_mode: attendance_mode,
+        error_message: nil
       )
       |> maybe_build_form(existing_rsvp)
 
@@ -99,14 +100,16 @@ defmodule OhioElixirWeb.RsvpLive do
          assign(socket,
            existing_rsvp: rsvp,
            attendance_mode: rsvp.attendance_mode || attendance_mode,
-           submitting: false
+           submitting: false,
+           error_message: nil
          )}
 
       {:error, error} ->
         {:noreply,
-         socket
-         |> put_flash(:error, format_error(error))
-         |> assign(submitting: false)}
+         assign(socket,
+           error_message: format_error(error),
+           submitting: false
+         )}
     end
   end
 
@@ -126,14 +129,15 @@ defmodule OhioElixirWeb.RsvpLive do
       {:ok, _rsvp} ->
         {:noreply,
          socket
-         |> assign(existing_rsvp: nil, submitting: false)
+         |> assign(existing_rsvp: nil, submitting: false, error_message: nil)
          |> maybe_build_form(nil)}
 
       {:error, error} ->
         {:noreply,
-         socket
-         |> put_flash(:error, format_error(error))
-         |> assign(submitting: false)}
+         assign(socket,
+           error_message: format_error(error),
+           submitting: false
+         )}
     end
   end
 
@@ -151,14 +155,16 @@ defmodule OhioElixirWeb.RsvpLive do
          assign(socket,
            existing_rsvp: updated_rsvp,
            attendance_mode: new_mode,
-           submitting: false
+           submitting: false,
+           error_message: nil
          )}
 
       {:error, error} ->
         {:noreply,
-         socket
-         |> put_flash(:error, format_error(error))
-         |> assign(submitting: false)}
+         assign(socket,
+           error_message: format_error(error),
+           submitting: false
+         )}
     end
   end
 
@@ -216,32 +222,47 @@ defmodule OhioElixirWeb.RsvpLive do
     ~H"""
     <div class="border border-base-300 p-6 sticky top-4 rsvp-component">
       <h2 class="text-lg font-bold mb-4">RSVP</h2>
-      <div class="space-y-3">
-        <%!-- Mode selector for hybrid events --%>
-        <.attendance_mode_selector
-          :if={@event.format == :hybrid}
-          selected_mode={@attendance_mode}
-          disabled={@submitting}
-          has_rsvp={rsvp_status(@existing_rsvp) == :already_rsvped}
-        />
 
-        <%!-- Location info --%>
-        <.attendance_mode_info
-          mode={@attendance_mode}
-          venue_name={@event.venue && @event.venue.name}
-          meeting_url={@event.meeting_url}
-        />
-
-        <%!-- Action area --%>
-        <div class="pt-3 border-t border-base-300">
-          <.rsvp_action_content
-            rsvp_status={rsvp_status(@existing_rsvp)}
-            current_user={@current_user}
-            submitting={@submitting}
-            form={@form}
-          />
+      <%= if @error_message do %>
+        <div class="alert alert-error mb-4 text-sm">
+          <.icon name="hero-exclamation-circle" class="w-5 h-5" />
+          <span>{@error_message}</span>
         </div>
-      </div>
+      <% end %>
+
+      <%= if !@event.rsvps_open? do %>
+        <div class="text-center py-4 text-base-content/60">
+          <.icon name="hero-clock" class="w-6 h-6 mx-auto mb-2" />
+          <p>This event has ended</p>
+        </div>
+      <% else %>
+        <div class="space-y-3">
+          <%!-- Mode selector for hybrid events --%>
+          <.attendance_mode_selector
+            :if={@event.format == :hybrid}
+            selected_mode={@attendance_mode}
+            disabled={@submitting}
+            has_rsvp={rsvp_status(@existing_rsvp) == :already_rsvped}
+          />
+
+          <%!-- Location info --%>
+          <.attendance_mode_info
+            mode={@attendance_mode}
+            venue_name={@event.venue && @event.venue.name}
+            meeting_url={@event.meeting_url}
+          />
+
+          <%!-- Action area --%>
+          <div class="pt-3 border-t border-base-300">
+            <.rsvp_action_content
+              rsvp_status={rsvp_status(@existing_rsvp)}
+              current_user={@current_user}
+              submitting={@submitting}
+              form={@form}
+            />
+          </div>
+        </div>
+      <% end %>
     </div>
     """
   end

@@ -8,6 +8,25 @@ defmodule OhioElixirWeb.EventHTML do
 
   embed_templates "event_html/*"
 
+  attr :label, :string, required: true
+  attr :rsvps, :list, default: nil
+
+  defp attendee_group(%{rsvps: nil} = assigns), do: ~H""
+  defp attendee_group(%{rsvps: []} = assigns), do: ~H""
+
+  defp attendee_group(assigns) do
+    ~H"""
+    <div>
+      <h3 class="text-sm font-semibold text-base-content/70 border-b border-base-300 pb-1 mb-2">
+        {@label} ({length(@rsvps)})
+      </h3>
+      <ul class="space-y-1">
+        <li :for={rsvp <- @rsvps} class="text-sm">{format_attendee_name(rsvp.user)}</li>
+      </ul>
+    </div>
+    """
+  end
+
   @doc """
   Renders an event card for the events list.
 

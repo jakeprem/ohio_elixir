@@ -8,12 +8,9 @@ defmodule OhioElixirWeb.EventController do
   def index(conn, params) do
     view = params["view"] || "upcoming"
     current_user = conn.assigns[:current_user]
+    time_filter = if view == "past", do: :past, else: :upcoming
 
-    events =
-      case view do
-        "past" -> Events.list_past_events!(actor: current_user)
-        _ -> Events.list_upcoming_events!(actor: current_user)
-      end
+    events = Events.list_events!(%{time_filter: time_filter}, actor: current_user)
 
     render(conn, :index, events: events, current_view: view)
   end
@@ -30,7 +27,8 @@ defmodule OhioElixirWeb.EventController do
         render(conn, :show,
           event: event,
           existing_rsvp: existing_rsvp,
-          mode: mode
+          mode: mode,
+          attendees_by_mode: group_attendees_by_mode(event.rsvps)
         )
 
       {:error, %Ash.Error.Query.NotFound{}} ->
@@ -94,5 +92,12 @@ defmodule OhioElixirWeb.EventController do
       {:ok, rsvp} -> rsvp
       _ -> nil
     end
+  end
+
+  defp group_attendees_by_mode(rsvps) do
+    rsvps
+    |> Enum.group_by(& &1.attendance_mode)
+    |> Map.put_new(:in_person, [])
+    |> Map.put_new(:online, [])
   end
 end

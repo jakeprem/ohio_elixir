@@ -77,11 +77,14 @@
             <% end %>
             <%= if @event.format in [:online, :hybrid] do %>
               <%= if is_binary(@event.meeting_url) do %>
-                <div class="flex items-center gap-2 mt-4">
-                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
-                  <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
-                    Join Online
-                  </a>
+                <div class="flex items-start gap-2 mt-4">
+                  <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70 mt-0.5" />
+                  <div>
+                    <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
+                      Join Online
+                    </a>
+                    <p class="text-sm text-base-content/60 break-all">{truncate_url(@event.meeting_url, 80)}</p>
+                  </div>
                 </div>
               <% else %>
                 <div class="flex items-center gap-2 mt-4">
@@ -141,24 +144,20 @@
           </div>
         <% end %>
 
-        <%!-- Attendee List - only shows if rsvps loaded (Ash policies filter for non-admins) --%>
-        <%= if @event.rsvps != [] do %>
+        <%!-- Attendee List - admin only --%>
+        <%= if @current_user && @current_user.role == :admin do %>
           <div class="border border-base-300 p-6">
             <h2 class="text-lg font-bold mb-4">
               Attendees ({length(@event.rsvps)})
             </h2>
-            <ul class="space-y-2">
-              <%= for rsvp <- @event.rsvps do %>
-                <li class="flex items-center justify-between text-sm">
-                  <span>{rsvp.user.email}</span>
-                  <%= if rsvp.attendance_mode do %>
-                    <span class="badge badge-xs">
-                      {Phoenix.Naming.humanize(rsvp.attendance_mode)}
-                    </span>
-                  <% end %>
-                </li>
+            <div class="space-y-4">
+              <%= if @event.rsvps == [] do %>
+                <p class="text-sm text-base-content/60">No RSVPs yet</p>
               <% end %>
-            </ul>
+              <.attendee_group label="In Person" rsvps={@attendees_by_mode[:in_person]} />
+              <.attendee_group label="Online" rsvps={@attendees_by_mode[:online]} />
+              <.attendee_group label="Unspecified" rsvps={@attendees_by_mode[nil]} />
+            </div>
           </div>
         <% end %>
 

@@ -9,10 +9,8 @@ defmodule OhioElixirWeb.PageController do
     current_user = conn.assigns[:current_user]
 
     next_event =
-      case Events.list_upcoming_events!(%{visible_only: true},
-             actor: current_user,
-             query: [limit: 1]
-           ) do
+      case Events.list_events!(%{visible_only: true, time_filter: :upcoming},
+             actor: current_user, query: [limit: 1]) do
         [event] -> event
         [] -> nil
       end
