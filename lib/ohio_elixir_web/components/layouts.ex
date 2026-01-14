@@ -12,6 +12,40 @@ defmodule OhioElixirWeb.Layouts do
   embed_templates "layouts/*"
 
   @doc """
+  Renders the GoatCounter analytics script tag.
+
+  Configuration is pulled from :ohio_elixir, :goatcounter config key:
+  - url: The GoatCounter endpoint URL
+  - allow_local: Whether to track localhost (useful for dev)
+  """
+  def goatcounter_script(assigns) do
+    config = Application.get_env(:ohio_elixir, :goatcounter, [])
+    url = Keyword.get(config, :url)
+    allow_local = Keyword.get(config, :allow_local, false)
+
+    settings =
+      if allow_local,
+        do: Jason.encode!(%{allow_local: true}),
+        else: "{}"
+
+    assigns =
+      assigns
+      |> assign(:url, url)
+      |> assign(:settings, settings)
+
+    ~H"""
+    <script
+      :if={@url}
+      data-goatcounter={@url}
+      data-goatcounter-settings={@settings}
+      async
+      src={~p"/js/goatcounter.js"}
+    >
+    </script>
+    """
+  end
+
+  @doc """
   Renders your app layout.
 
   This function is typically invoked from every template,

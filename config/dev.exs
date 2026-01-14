@@ -88,3 +88,8 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# GoatCounter analytics (dev site)
+config :ohio_elixir, :goatcounter,
+  url: "https://ohioelixir-dev.goatcounter.com/count",
+  allow_local: true

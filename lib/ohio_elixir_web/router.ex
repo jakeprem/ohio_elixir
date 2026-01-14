@@ -64,6 +64,13 @@ defmodule OhioElixirWeb.Router do
     get "/health", HealthController, :index
   end
 
+  # GoatCounter analytics proxy (bypasses adblockers) - currently unused
+  scope "/gc", OhioElixirWeb do
+    # sendBeacon uses POST, fallback uses GET
+    get "/count", AnalyticsController, :count
+    post "/count", AnalyticsController, :count
+  end
+
   # Routes that require authentication
   scope "/", OhioElixirWeb do
     pipe_through [:browser, :require_auth]
