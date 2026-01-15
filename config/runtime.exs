@@ -117,4 +117,11 @@ if config_env() == :prod do
   config :ohio_elixir, OhioElixir.Mailer,
     adapter: Swoosh.Adapters.Brevo,
     api_key: brevo_api_key
+
+  # OG image HMAC signing
+  og_hmac_secret =
+    System.get_env("OG_IMAGE_HMAC_SECRET") ||
+      raise "Missing environment variable OG_IMAGE_HMAC_SECRET"
+
+  config :ohio_elixir, :og_image, hmac_secret: og_hmac_secret
 end

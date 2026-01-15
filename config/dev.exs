@@ -93,3 +93,6 @@ config :swoosh, :api_client, false
 config :ohio_elixir, :goatcounter,
   url: "https://ohioelixir-dev.goatcounter.com/count",
   allow_local: true
+
+# OG image HMAC signing (dev)
+config :ohio_elixir, :og_image, hmac_secret: "dev-secret-not-for-production"

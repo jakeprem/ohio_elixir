@@ -47,7 +47,10 @@ defmodule OhioElixirWeb.RsvpLive do
   defp parse_mode(_), do: nil
 
   defp validate_mode_for_format(nil, _format), do: nil
-  defp validate_mode_for_format(:in_person, format) when format in [:in_person, :hybrid], do: :in_person
+
+  defp validate_mode_for_format(:in_person, format) when format in [:in_person, :hybrid],
+    do: :in_person
+
   defp validate_mode_for_format(:online, format) when format in [:online, :hybrid], do: :online
   defp validate_mode_for_format(_mode, _format), do: nil
 

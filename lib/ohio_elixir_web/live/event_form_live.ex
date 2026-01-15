@@ -182,8 +182,7 @@ defmodule OhioElixirWeb.EventFormLive do
               navigate={~p"/events"}
               class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm"
             >
-              <.icon name="hero-arrow-left" class="w-4 h-4" />
-              Back to events
+              <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to events
             </.link>
           </div>
           <h1 class="text-3xl font-bold">{@page_title}</h1>
@@ -227,7 +226,12 @@ defmodule OhioElixirWeb.EventFormLive do
               <.input field={@form[:ends_at]} type="datetime-local" label="End Time" />
             </div>
 
-            <.input field={@form[:timezone]} type="select" label="Timezone" options={timezone_options()} />
+            <.input
+              field={@form[:timezone]}
+              type="select"
+              label="Timezone"
+              options={timezone_options()}
+            />
           </div>
 
           <div class="border border-base-300 p-6 space-y-4">
@@ -249,19 +253,32 @@ defmodule OhioElixirWeb.EventFormLive do
                   phx-click="toggle_venue_form"
                   class="btn btn-sm btn-ghost text-primary mt-7"
                 >
-                  <%= if @show_venue_form, do: "Cancel", else: "+ New" %>
+                  {if @show_venue_form, do: "Cancel", else: "+ New"}
                 </button>
               </div>
 
               <%= if @show_venue_form do %>
                 <div class="border border-base-300 p-4 mt-2 space-y-3 bg-base-200/50">
                   <h3 class="text-sm font-medium">New Venue</h3>
-                  <.input field={@venue_form[:name]} label="Name" phx-change="validate_venue" required />
-                  <.input field={@venue_form[:address_line_1]} label="Address" phx-change="validate_venue" />
+                  <.input
+                    field={@venue_form[:name]}
+                    label="Name"
+                    phx-change="validate_venue"
+                    required
+                  />
+                  <.input
+                    field={@venue_form[:address_line_1]}
+                    label="Address"
+                    phx-change="validate_venue"
+                  />
                   <div class="grid grid-cols-3 gap-2">
                     <.input field={@venue_form[:city]} label="City" phx-change="validate_venue" />
                     <.input field={@venue_form[:state]} label="State" phx-change="validate_venue" />
-                    <.input field={@venue_form[:postal_code]} label="Postal Code" phx-change="validate_venue" />
+                    <.input
+                      field={@venue_form[:postal_code]}
+                      label="Postal Code"
+                      phx-change="validate_venue"
+                    />
                   </div>
                   <button
                     type="button"
@@ -286,11 +303,14 @@ defmodule OhioElixirWeb.EventFormLive do
           </div>
 
           <div class="flex gap-4 justify-end">
-            <.link navigate={if @live_action == :edit, do: ~p"/events/#{@event.id}", else: ~p"/events"} class="btn btn-ghost">
+            <.link
+              navigate={if @live_action == :edit, do: ~p"/events/#{@event.id}", else: ~p"/events"}
+              class="btn btn-ghost"
+            >
               Cancel
             </.link>
             <button type="submit" class="btn btn-primary" phx-disable-with="Saving...">
-              <%= if @live_action == :new, do: "Create Event", else: "Save Changes" %>
+              {if @live_action == :new, do: "Create Event", else: "Save Changes"}
             </button>
           </div>
         </.form>

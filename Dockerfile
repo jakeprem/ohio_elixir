@@ -20,9 +20,9 @@ ARG RUNNER_IMAGE="docker.io/debian:${DEBIAN_VERSION}"
 
 FROM ${BUILDER_IMAGE} AS builder
 
-# install build dependencies (including nodejs/npm for Tailwind plugins)
+# install build dependencies (including nodejs/npm for Tailwind plugins, curl for bun, unzip for bun)
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends build-essential git nodejs npm \
+  && apt-get install -y --no-install-recommends build-essential git nodejs npm curl unzip \
   && rm -rf /var/lib/apt/lists/*
 
 # prepare build dir
@@ -50,6 +50,11 @@ RUN mix assets.setup
 
 COPY priv priv
 
+# Install Bun and OG image dependencies
+RUN curl -fsSL https://bun.sh/install | bash \
+  && /root/.bun/bin/bun install --cwd priv/bun-scripts
+ENV PATH="/root/.bun/bin:${PATH}"
+
 COPY lib lib
 
 # Compile the release
@@ -73,9 +78,9 @@ RUN mix release
 # the compiled release and other runtime necessities
 FROM ${RUNNER_IMAGE} AS final
 
-# Install runtime dependencies + sqlite3 for WAL mode setup + curl for Litestream
+# Install runtime dependencies + sqlite3 for WAL mode setup + curl for Litestream + unzip for bun
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates curl sqlite3 \
+  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates curl sqlite3 unzip \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Litestream for SQLite backups
@@ -108,6 +113,11 @@ RUN chmod +x /app/run.sh
 
 # Create data directory for SQLite database (will be mounted as volume)
 RUN mkdir -p /mnt/data && chown nobody:root /mnt/data
+
+# Install Bun runtime for OG image generation (to /usr/local so nobody user can access)
+ENV BUN_INSTALL="/usr/local"
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/usr/local/bin:${PATH}"
 
 USER nobody
 

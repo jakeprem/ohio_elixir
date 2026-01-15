@@ -1,0 +1,9 @@
+{
+  "name": "ohio-elixir-bun-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@takumi-rs/image-response": "^0.33.0",
+    "react": "^19.0.0"
+  }
+}

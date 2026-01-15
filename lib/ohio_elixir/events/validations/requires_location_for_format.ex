@@ -29,7 +29,8 @@ defmodule OhioElixir.Events.Validations.RequiresLocationForFormat do
         {:error, field: :venue_id, message: "#{format_name(format)} events require a venue"}
 
       format in [:online, :hybrid] and blank?(meeting_url) ->
-        {:error, field: :meeting_url, message: "#{format_name(format)} events require a meeting URL"}
+        {:error,
+         field: :meeting_url, message: "#{format_name(format)} events require a meeting URL"}
 
       true ->
         :ok

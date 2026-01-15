@@ -46,6 +46,96 @@ defmodule OhioElixirWeb.Layouts do
   end
 
   @doc """
+  Renders Open Graph meta tags for social sharing.
+
+  Supports the following assigns with fallback chain:
+  - og_title: Falls back to page_title, then site default
+  - og_description: Falls back to site default
+  - og_image: Falls back to default site image
+  - og_url: Current request URL
+  - og_type: Defaults to "website"
+
+  ## Examples
+
+      # In root.html.heex
+      <.og_tags
+        og_title={assigns[:og_title]}
+        og_description={assigns[:og_description]}
+        og_image={assigns[:og_image]}
+        og_url={assigns[:og_url]}
+        og_type={assigns[:og_type]}
+        page_title={assigns[:page_title]}
+        conn={assigns[:conn]}
+      />
+  """
+  attr :og_title, :string, default: nil
+  attr :og_description, :string, default: nil
+  attr :og_image, :string, default: nil
+  attr :og_url, :string, default: nil
+  attr :og_type, :string, default: nil
+  attr :page_title, :string, default: nil
+  attr :conn, :any, default: nil
+
+  def og_tags(assigns) do
+    site_name = "Ohio Elixir"
+
+    default_description =
+      "Join Ohio's community of Elixir developers. Monthly meetups, show & tell sessions, and collaborative learning."
+
+    # Build the actual values with fallback chain
+    title = assigns.og_title || assigns.page_title || site_name
+
+    full_title =
+      if title == site_name, do: site_name, else: "#{title} · #{site_name}"
+
+    description = assigns.og_description || default_description
+    image = assigns.og_image || default_og_image_url()
+    og_type = assigns.og_type || "website"
+
+    # Get current URL from conn
+    url = assigns.og_url || current_url_from_conn(assigns.conn)
+
+    assigns =
+      assigns
+      |> assign(:full_title, full_title)
+      |> assign(:description, description)
+      |> assign(:image, image)
+      |> assign(:url, url)
+      |> assign(:og_type, og_type)
+      |> assign(:site_name, site_name)
+
+    ~H"""
+    <meta property="og:type" content={@og_type} />
+    <meta property="og:url" content={@url} />
+    <meta property="og:title" content={@full_title} />
+    <meta property="og:description" content={@description} />
+    <meta property="og:image" content={@image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content={@site_name} />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={@url} />
+    <meta name="twitter:title" content={@full_title} />
+    <meta name="twitter:description" content={@description} />
+    <meta name="twitter:image" content={@image} />
+
+    <meta name="description" content={@description} />
+    """
+  end
+
+  defp default_og_image_url do
+    OhioElixirWeb.Endpoint.url() <> "/images/og-default.png"
+  end
+
+  defp current_url_from_conn(nil), do: OhioElixirWeb.Endpoint.url()
+
+  defp current_url_from_conn(conn) do
+    OhioElixirWeb.Endpoint.url() <> conn.request_path
+  end
+
+  @doc """
   Renders your app layout.
 
   This function is typically invoked from every template,

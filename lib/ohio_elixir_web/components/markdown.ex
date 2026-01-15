@@ -51,7 +51,10 @@ defmodule OhioElixirWeb.Markdown do
   def to_html("", _preset), do: {:ok, ""}
 
   def to_html(markdown, :default) when is_binary(markdown) do
-    MDEx.to_html(markdown, Keyword.put(@base_options, :sanitize, MDEx.Document.default_sanitize_options()))
+    MDEx.to_html(
+      markdown,
+      Keyword.put(@base_options, :sanitize, MDEx.Document.default_sanitize_options())
+    )
   end
 
   def to_html(markdown, :trusted) when is_binary(markdown) do

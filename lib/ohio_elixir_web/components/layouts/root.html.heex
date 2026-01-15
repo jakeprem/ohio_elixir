@@ -9,6 +9,7 @@
     <.live_title default="Ohio Elixir" suffix=" · Ohio Elixir">
       {assigns[:page_title]}
     </.live_title>
+    <.og_tags {assigns} />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -46,7 +47,8 @@
   </head>
   <body data-instant-whitelist class="font-dm bg-base-100 text-base-content">
     {@inner_content}
-    <script src={~p"/js/prefetch.js"} type="module"></script>
+    <script src={~p"/js/prefetch.js"} type="module">
+    </script>
     <.goatcounter_script />
   </body>
 </html>

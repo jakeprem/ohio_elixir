@@ -64,6 +64,12 @@ defmodule OhioElixirWeb.Router do
     get "/health", HealthController, :index
   end
 
+  # OG image generation (served without full browser pipeline for speed)
+  # Using .png extension ensures proper CDN caching
+  scope "/og", OhioElixirWeb do
+    get "/image.png", OGImageController, :show
+  end
+
   # GoatCounter analytics proxy (bypasses adblockers) - currently unused
   scope "/gc", OhioElixirWeb do
     # sendBeacon uses POST, fallback uses GET

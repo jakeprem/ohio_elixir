@@ -11,6 +11,7 @@ kill_signal = 'SIGTERM'
 
 [env]
 DATABASE_PATH = '/mnt/data/ohio_elixir.db'
+OG_IMAGE_WORKER_URL = "https://ohio-elixir-og-image.ohioelixir.workers.dev"
 PHX_HOST = 'ohioelixir.com'
 POOL_SIZE = '5'
 PORT = '8080'
@@ -44,4 +45,4 @@ path = '/health'
 
 [[vm]]
 size = 'shared-cpu-1x'
-memory = '512mb'
+memory = '768mb'

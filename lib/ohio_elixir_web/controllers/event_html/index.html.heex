@@ -5,8 +5,7 @@
         <h1 class="text-3xl font-bold">Events</h1>
         <%= if Ash.can?({OhioElixir.Events.Event, :create}, @current_user) do %>
           <.link navigate={~p"/events/new"} class="btn btn-primary">
-            <.icon name="hero-plus" class="w-5 h-5" />
-            Create Event
+            <.icon name="hero-plus" class="w-5 h-5" /> Create Event
           </.link>
         <% end %>
       </div>

@@ -36,7 +36,11 @@ defmodule OhioElixir.Events do
     resource OhioElixir.Events.Rsvp do
       define :rsvp_to_event, action: :rsvp, args: [:event_id]
       define :guest_rsvp_to_event, action: :guest_rsvp, args: [:event_id, :email]
-      define :get_rsvp_by_user_and_event, action: :get_by_user_and_event, args: [:user_id, :event_id]
+
+      define :get_rsvp_by_user_and_event,
+        action: :get_by_user_and_event,
+        args: [:user_id, :event_id]
+
       define :cancel_rsvp, action: :cancel
       define :mark_rsvp_attended, action: :mark_attended
       define :my_rsvps, action: :my_rsvps

@@ -12,7 +12,10 @@ defmodule OhioElixirWeb.EventController do
 
     events = Events.list_events!(%{time_filter: time_filter}, actor: current_user)
 
-    render(conn, :index, events: events, current_view: view)
+    conn
+    |> assign(:page_title, "Events")
+    |> assign_og(description: "Browse upcoming and past Ohio Elixir meetups and events.")
+    |> render(:index, events: events, current_view: view)
   end
 
   def show(conn, params) do
@@ -24,7 +27,10 @@ defmodule OhioElixirWeb.EventController do
       {:ok, event} ->
         existing_rsvp = get_existing_rsvp(current_user, id)
 
-        render(conn, :show,
+        conn
+        |> assign(:page_title, event.title)
+        |> assign_og(event)
+        |> render(:show,
           event: event,
           existing_rsvp: existing_rsvp,
           mode: mode,

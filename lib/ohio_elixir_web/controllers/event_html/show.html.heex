@@ -3,12 +3,17 @@
   <header class="border-b border-base-300 py-8">
     <div class="max-w-5xl mx-auto px-6">
       <div class="mb-4">
-        <.link navigate={~p"/events"} class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm">
-          <.icon name="hero-arrow-left" class="w-4 h-4" />
-          Back to events
+        <.link
+          navigate={~p"/events"}
+          class="text-base-content/60 hover:text-base-content flex items-center gap-1 text-sm"
+        >
+          <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to events
         </.link>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-bold mb-4">{@event.title}</h1>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-2">{@event.title}</h1>
+      <%= if @event.short_description do %>
+        <p class="text-lg text-base-content/70 mb-4">{@event.short_description}</p>
+      <% end %>
 
       <div class="flex flex-wrap items-center gap-2">
         <.format_badge format={@event.format} />
@@ -80,18 +85,23 @@
                 <div class="flex items-start gap-2 mt-4">
                   <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70 mt-0.5" />
                   <div>
-                    <a href={@event.meeting_url} class="text-primary hover:underline" target="_blank">
+                    <a
+                      href={@event.meeting_url}
+                      class="text-primary hover:underline"
+                      target="_blank"
+                    >
                       Join Online
                     </a>
-                    <p class="text-sm text-base-content/60 break-all">{truncate_url(@event.meeting_url, 80)}</p>
+                    <p class="text-sm text-base-content/60 break-all">
+                      {truncate_url(@event.meeting_url, 80)}
+                    </p>
                   </div>
                 </div>
               <% else %>
                 <div class="flex items-center gap-2 mt-4">
                   <.icon name="hero-video-camera" class="w-5 h-5 text-base-content/70" />
                   <span class="text-base-content/50 flex items-center gap-1">
-                    <.icon name="hero-lock-closed" class="w-4 h-4" />
-                    RSVP to view link
+                    <.icon name="hero-lock-closed" class="w-4 h-4" /> RSVP to view link
                   </span>
                 </div>
               <% end %>
@@ -115,9 +125,11 @@
           <div class="border border-base-300 p-6">
             <h2 class="text-lg font-bold mb-4">Manage Event</h2>
             <div class="space-y-3">
-              <.link navigate={~p"/events/#{@event.id}/edit"} class="btn btn-outline btn-sm w-full">
-                <.icon name="hero-pencil" class="w-4 h-4" />
-                Edit Event
+              <.link
+                navigate={~p"/events/#{@event.id}/edit"}
+                class="btn btn-outline btn-sm w-full"
+              >
+                <.icon name="hero-pencil" class="w-4 h-4" /> Edit Event
               </.link>
               <%= if @event.status == :draft and Ash.can?({@event, :publish}, @current_user) do %>
                 <.link
@@ -125,8 +137,7 @@
                   method="post"
                   class="btn btn-success btn-sm w-full"
                 >
-                  <.icon name="hero-check-circle" class="w-4 h-4" />
-                  Publish Event
+                  <.icon name="hero-check-circle" class="w-4 h-4" /> Publish Event
                 </.link>
               <% end %>
               <%= if @event.status == :published and Ash.can?({@event, :cancel}, @current_user) do %>
@@ -136,8 +147,7 @@
                   class="btn btn-error btn-outline btn-sm w-full"
                   data-confirm="Are you sure you want to cancel this event?"
                 >
-                  <.icon name="hero-x-circle" class="w-4 h-4" />
-                  Cancel Event
+                  <.icon name="hero-x-circle" class="w-4 h-4" /> Cancel Event
                 </.link>
               <% end %>
             </div>
@@ -162,10 +172,10 @@
         <% end %>
 
         <%!-- RSVP Box --%>
-        <%= live_render(@conn, OhioElixirWeb.RsvpLive,
+        {live_render(@conn, OhioElixirWeb.RsvpLive,
           id: "rsvp-#{@event.id}",
           session: %{"event_id" => @event.id, "mode" => @mode}
-        ) %>
+        )}
       </div>
     </div>
   </div>

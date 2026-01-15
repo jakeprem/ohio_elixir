@@ -43,6 +43,7 @@ defmodule OhioElixirWeb do
       use Gettext, backend: OhioElixirWeb.Gettext
 
       import Plug.Conn
+      import OhioElixirWeb.OGHelpers
 
       unquote(verified_routes())
     end

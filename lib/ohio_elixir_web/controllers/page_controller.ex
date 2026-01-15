@@ -10,7 +10,9 @@ defmodule OhioElixirWeb.PageController do
 
     next_event =
       case Events.list_events!(%{visible_only: true, time_filter: :upcoming},
-             actor: current_user, query: [limit: 1]) do
+             actor: current_user,
+             query: [limit: 1]
+           ) do
         [event] -> event
         [] -> nil
       end

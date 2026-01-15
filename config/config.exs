@@ -9,8 +9,7 @@ import Config
 
 config :ash_oban, pro?: false
 
-config :ohio_elixir, :ash_rate_limiter,
-  hammer: OhioElixir.RateLimiter
+config :ohio_elixir, :ash_rate_limiter, hammer: OhioElixir.RateLimiter
 
 config :ohio_elixir, Oban,
   engine: Oban.Engines.Lite,

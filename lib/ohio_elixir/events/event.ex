@@ -14,6 +14,17 @@ defmodule OhioElixir.Events.Event do
     repo OhioElixir.Repo
   end
 
+  field_policies do
+    field_policy :* do
+      authorize_if always()
+    end
+
+    field_policy :meeting_url do
+      authorize_if actor_attribute_equals(:role, :admin)
+      authorize_if expr(exists(rsvps, user_id == ^actor(:id) and status == :confirmed))
+    end
+  end
+
   json_api do
     type "event"
 
@@ -36,6 +47,7 @@ defmodule OhioElixir.Events.Event do
     read :read do
       primary? true
       argument :visible_only, :boolean, default: false
+
       argument :time_filter, :atom do
         constraints one_of: [:all, :upcoming, :past]
         default :all
@@ -106,17 +118,6 @@ defmodule OhioElixir.Events.Event do
 
     policy action_type([:create, :update, :destroy]) do
       authorize_if actor_attribute_equals(:role, :admin)
-    end
-  end
-
-  field_policies do
-    field_policy :* do
-      authorize_if always()
-    end
-
-    field_policy :meeting_url do
-      authorize_if actor_attribute_equals(:role, :admin)
-      authorize_if expr(exists(rsvps, user_id == ^actor(:id) and status == :confirmed))
     end
   end
 
@@ -196,12 +197,14 @@ defmodule OhioElixir.Events.Event do
     calculate :past?, :boolean, expr(starts_at <= now())
 
     # RSVPs are open until end_time (or 2 hours after start if no end_time)
-    calculate :rsvps_open?, :boolean, expr(
-      if is_nil(ends_at) do
-        datetime_add(starts_at, 2, :hour) > now()
-      else
-        ends_at > now()
-      end
-    )
+    calculate :rsvps_open?,
+              :boolean,
+              expr(
+                if is_nil(ends_at) do
+                  datetime_add(starts_at, 2, :hour) > now()
+                else
+                  ends_at > now()
+                end
+              )
   end
 end

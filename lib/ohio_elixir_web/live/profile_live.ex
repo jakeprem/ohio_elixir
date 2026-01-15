@@ -75,7 +75,9 @@ defmodule OhioElixirWeb.ProfileLive do
         <.form for={@form} id="profile-form" phx-change="validate" phx-submit="save" class="space-y-6">
           <div class="border border-base-300 rounded-lg p-6 space-y-4">
             <h2 class="text-lg font-bold">Profile Information</h2>
-            <p class="text-sm text-base-content/60">Your name will be displayed in the navigation and on your RSVPs.</p>
+            <p class="text-sm text-base-content/60">
+              Your name will be displayed in the navigation and on your RSVPs.
+            </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <.input field={@form[:first_name]} label="First Name" placeholder="Optional" />
@@ -102,12 +104,17 @@ defmodule OhioElixirWeb.ProfileLive do
                   />
                   <p class="text-sm text-base-content/60 mt-1">
                     When enabled, your avatar will be fetched from
-                    <a href="https://gravatar.com" target="_blank" class="link link-primary">Gravatar</a>
+                    <a href="https://gravatar.com" target="_blank" class="link link-primary">
+                      Gravatar
+                    </a>
                     based on your email. When disabled, your initials will be shown instead.
                   </p>
                 </div>
                 <div class="flex-shrink-0">
-                  <Layouts.user_avatar user={preview_user(@form, pref_form, @current_user)} class="w-16" />
+                  <Layouts.user_avatar
+                    user={preview_user(@form, pref_form, @current_user)}
+                    class="w-16"
+                  />
                 </div>
               </div>
             </.inputs_for>
