@@ -5,22 +5,26 @@ defmodule OhioElixir.Application do
 
   use Application
 
+  @impl true
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
-      OhioElixir.Repo,
-      # Start the Telemetry supervisor
       OhioElixirWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: OhioElixir.PubSub},
-      # Start the Endpoint (http/https)
-      OhioElixirWeb.Endpoint,
+      OhioElixir.Repo,
+      {Ecto.Migrator,
+       repos: Application.fetch_env!(:ohio_elixir, :ecto_repos), skip: skip_migrations?()},
+      {Oban,
+       AshOban.config(
+         Application.fetch_env!(:ohio_elixir, :ash_domains),
+         Application.fetch_env!(:ohio_elixir, Oban)
+       )},
       # Start a worker by calling: OhioElixir.Worker.start_link(arg)
-      # {OhioElixir.Worker, arg}
-      {Registry, keys: :duplicate, name: Registry.EventsPubSub, id: Registry.EventsPubSub}
+      # {OhioElixir.Worker, arg},
+      # Start to serve requests, typically the last entry
+      {DNSCluster, query: Application.get_env(:ohio_elixir, :dns_cluster_query) || :ignore},
+      {Phoenix.PubSub, name: OhioElixir.PubSub},
+      OhioElixirWeb.Endpoint,
+      {AshAuthentication.Supervisor, [otp_app: :ohio_elixir]}
     ]
-
-    # ++ maybe_start_discord_bot()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -30,22 +34,14 @@ defmodule OhioElixir.Application do
 
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
+  @impl true
   def config_change(changed, _new, removed) do
     OhioElixirWeb.Endpoint.config_change(changed, removed)
     :ok
   end
 
-  # defp maybe_start_discord_bot do
-  #   if should_start?(OhioElixirBot.DiscordBot) do
-  #     {:ok, _} = Application.ensure_all_started(:nostrum)
-  #
-  #     [OhioElixirBot.DiscordBot]
-  #   else
-  #     []
-  #   end
-  # end
-
-  # defp should_start?(process) do
-  #   Application.get_env(:ohio_elixir, process, [])[:enabled] == true
-  # end
+  defp skip_migrations?() do
+    # By default, sqlite migrations are run when using a release
+    System.get_env("RELEASE_NAME") == nil
+  end
 end

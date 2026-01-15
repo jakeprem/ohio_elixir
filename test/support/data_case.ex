@@ -16,9 +16,6 @@ defmodule OhioElixir.DataCase do
 
   use ExUnit.CaseTemplate
 
-  alias Ecto.Adapters.SQL.Sandbox
-  alias OhioElixir.Repo
-
   using do
     quote do
       alias OhioElixir.Repo
@@ -27,18 +24,20 @@ defmodule OhioElixir.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import OhioElixir.DataCase
-      import OhioElixir.TestHelpers
     end
   end
 
   setup tags do
-    :ok = Sandbox.checkout(Repo)
-
-    unless tags[:async] do
-      Sandbox.mode(Repo, {:shared, self()})
-    end
-
+    OhioElixir.DataCase.setup_sandbox(tags)
     :ok
+  end
+
+  @doc """
+  Sets up the sandbox based on the test tags.
+  """
+  def setup_sandbox(tags) do
+    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(OhioElixir.Repo, shared: not tags[:async])
+    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end
 
   @doc """

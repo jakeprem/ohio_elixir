@@ -1,6 +1,20 @@
 [
-  plugins: [Phoenix.LiveView.HTMLFormatter],
-  import_deps: [:ecto, :ecto_sql, :phoenix],
-  inputs: ["*.{heex,ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{heex,ex,exs}"],
-  subdirectories: ["priv/*/migrations"]
+  import_deps: [
+    :ash_oban,
+    :oban,
+    :ash_admin,
+    :ash_authentication_phoenix,
+    :ash_authentication,
+    :ash_sqlite,
+    :ash_json_api,
+    :ash_phoenix,
+    :ash,
+    :reactor,
+    :ecto,
+    :ecto_sql,
+    :phoenix
+  ],
+  subdirectories: ["priv/*/migrations"],
+  plugins: [Spark.Formatter, Phoenix.LiveView.HTMLFormatter],
+  inputs: ["*.{heex,ex,exs}", "{config,lib,test}/**/*.{heex,ex,exs}", "priv/*/seeds.exs"]
 ]

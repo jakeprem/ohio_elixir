@@ -1,54 +1,88 @@
 defmodule OhioElixirWeb.Router do
   use OhioElixirWeb, :router
 
-  import OhioElixirWeb.UserAuth
+  import Oban.Web.Router
+  use AshAuthentication.Phoenix.Router
+
+  import AshAuthentication.Plug.Helpers
 
   pipeline :browser do
     plug :accepts, ["html"]
-    plug :put_root_layout, {OhioElixirWeb.LayoutView, :root}
     plug :fetch_session
-    plug :fetch_flash
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {OhioElixirWeb.Layouts, :root}
     plug :protect_from_forgery
-
-    plug :put_secure_browser_headers, %{
-      "content-security-policy" =>
-        "default-src 'self' https://*.eventbrite.com https://*.fontawesome.com; font-src fonts.gstatic.com https://*.fontawesome.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.eventbrite.com https://*.fontawesome.com"
-    }
-
-    plug :fetch_current_user
-  end
-
-  pipeline :browser_override do
-    plug :accepts, ["html"]
-    plug :put_root_layout, {OhioElixirWeb.LayoutView, :root}
-    plug :fetch_session
-    plug :fetch_flash
-    plug :protect_from_forgery
-
-    plug :put_secure_browser_headers, %{
-      "content-security-policy" =>
-        "default-src 'self' https://*.eventbrite.com https://*.fontawesome.com; font-src fonts.gstatic.com https://*.fontawesome.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.eventbrite.com https://*.fontawesome.com https://instant.page"
-    }
-
-    plug :fetch_current_user
+    plug :put_secure_browser_headers
+    plug :load_from_session
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :load_from_bearer
+    plug :set_actor, :user
   end
 
   scope "/", OhioElixirWeb do
     pipe_through :browser
 
-    get "/page/index", PageController, :index
+    ash_authentication_live_session :authenticated_routes do
+      # in each liveview, add one of the following at the top of the module:
+      #
+      # If an authenticated user must be present:
+      # on_mount {OhioElixirWeb.LiveUserAuth, :live_user_required}
+      #
+      # If an authenticated user *may* be present:
+      # on_mount {OhioElixirWeb.LiveUserAuth, :live_user_optional}
+      #
+      # If an authenticated user must *not* be present:
+      # on_mount {OhioElixirWeb.LiveUserAuth, :live_no_user}
+    end
+  end
 
-    get "/past_meetings", PastMeetingsController, :index
+  scope "/api/json" do
+    pipe_through [:api]
+
+    forward "/swaggerui", OpenApiSpex.Plug.SwaggerUI,
+      path: "/api/json/open_api",
+      default_model_expand_depth: 4
+
+    forward "/", OhioElixirWeb.AshJsonApiRouter
   end
 
   scope "/", OhioElixirWeb do
-    pipe_through :browser_override
+    pipe_through :browser
 
     get "/", PageController, :home
+    auth_routes AuthController, OhioElixir.Accounts.User, path: "/auth"
+    sign_out_route AuthController
+
+    # Remove these if you'd like to use your own authentication views
+    sign_in_route register_path: "/register",
+                  reset_path: "/reset",
+                  auth_routes_prefix: "/auth",
+                  on_mount: [{OhioElixirWeb.LiveUserAuth, :live_no_user}],
+                  overrides: [
+                    OhioElixirWeb.AuthOverrides,
+                    Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
+                  ]
+
+    # Remove this if you do not want to use the reset password feature
+    reset_route auth_routes_prefix: "/auth",
+                overrides: [
+                  OhioElixirWeb.AuthOverrides,
+                  Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
+                ]
+
+    # Remove this if you do not use the confirmation strategy
+    confirm_route OhioElixir.Accounts.User, :confirm_new_user,
+      auth_routes_prefix: "/auth",
+      overrides: [OhioElixirWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
+
+    # Remove this if you do not use the magic link strategy.
+    magic_sign_in_route(OhioElixir.Accounts.User, :magic_link,
+      auth_routes_prefix: "/auth",
+      overrides: [OhioElixirWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
+    )
   end
 
   # Other scopes may use custom stacks.
@@ -56,52 +90,36 @@ defmodule OhioElixirWeb.Router do
   #   pipe_through :api
   # end
 
-  # Enables LiveDashboard only for development
-  #
-  # If you want to use the LiveDashboard in production, you should put
-  # it behind authentication and allow only admins to access it.
-  # If your application does not have an admins-only section yet,
-  # you can use Plug.BasicAuth to set up some basic authentication
-  # as long as you are also using SSL (which you should anyway).
-  if Mix.env() in [:dev, :test] do
+  # Enable LiveDashboard and Swoosh mailbox preview in development
+  if Application.compile_env(:ohio_elixir, :dev_routes) do
+    # If you want to use the LiveDashboard in production, you should put
+    # it behind authentication and allow only admins to access it.
+    # If your application does not have an admins-only section yet,
+    # you can use Plug.BasicAuth to set up some basic authentication
+    # as long as you are also using SSL (which you should anyway).
     import Phoenix.LiveDashboard.Router
+
+    scope "/dev" do
+      pipe_through :browser
+
+      live_dashboard "/dashboard", metrics: OhioElixirWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
 
     scope "/" do
       pipe_through :browser
-      live_dashboard "/dashboard", metrics: OhioElixirWeb.Telemetry
+
+      oban_dashboard("/oban")
     end
   end
 
-  scope "/", OhioElixirWeb do
-    pipe_through [:browser]
+  if Application.compile_env(:ohio_elixir, :dev_routes) do
+    import AshAdmin.Router
 
-    delete "/users/log_out", UserSessionController, :delete
+    scope "/admin" do
+      pipe_through :browser
 
-    live "/proposal_submission", ProposalSubmissionLive
-  end
-
-  ## Authentication routes
-
-  scope "/", OhioElixirWeb do
-    pipe_through [:browser, :redirect_if_user_is_authenticated]
-
-    get "/users/log_in", UserSessionController, :new
-    post "/users/log_in", UserSessionController, :create
-  end
-
-  scope "/", OhioElixirWeb do
-    pipe_through [:browser, :require_authenticated_user]
-
-    get "/users/settings", UserSettingsController, :edit
-    put "/users/settings", UserSettingsController, :update
-
-    resources "/meetings", MeetingController do
-      post "/activate", ActivationController, :create
+      ash_admin "/"
     end
-
-    resources "/speakers", SpeakerController
-
-    live "/proposals", ProposalLive, :index
-    live "/proposals/:id", ProposalLive, :show
   end
 end

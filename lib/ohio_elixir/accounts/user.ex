@@ -1,116 +1,110 @@
 defmodule OhioElixir.Accounts.User do
-  @moduledoc false
-  use Ecto.Schema
-  import Ecto.Changeset
+  use Ash.Resource,
+    otp_app: :ohio_elixir,
+    domain: OhioElixir.Accounts,
+    data_layer: AshSqlite.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [AshAuthentication]
 
-  @derive {Inspect, except: [:password]}
-  schema "users" do
-    field :email, :string
-    field :password, :string, virtual: true
-    field :hashed_password, :string
-
-    timestamps()
+  sqlite do
+    table "users"
+    repo OhioElixir.Repo
   end
 
-  @doc """
-  A user changeset for registration.
+  authentication do
+    add_ons do
+      log_out_everywhere do
+        apply_on_password_change? true
+      end
+    end
 
-  It is important to validate the length of both email and password.
-  Otherwise databases may truncate the email without warnings, which
-  could lead to unpredictable or insecure behaviour. Long passwords may
-  also be very expensive to hash for certain algorithms.
+    tokens do
+      enabled? true
+      token_resource OhioElixir.Accounts.Token
+      signing_secret OhioElixir.Secrets
+      store_all_tokens? true
+      require_token_presence_for_authentication? true
+    end
 
-  ## Options
+    strategies do
+      magic_link do
+        identity_field :email
+        registration_enabled? true
+        require_interaction? true
 
-    * `:hash_password` - Hashes the password so it can be stored securely
-      in the database and ensures the password field is cleared to prevent
-      leaks in the logs. If password hashing is not needed and clearing the
-      password field is not desired (like when using this changeset for
-      validations on a LiveView form), this option can be set to `false`.
-      Defaults to `true`.
-  """
-  def registration_changeset(user, attrs, opts \\ []) do
-    user
-    |> cast(attrs, [:email, :password])
-    |> validate_email()
-    |> validate_password(opts)
-  end
-
-  defp validate_email(changeset) do
-    changeset
-    |> validate_required([:email])
-    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
-    |> validate_length(:email, max: 160)
-    |> unsafe_validate_unique(:email, OhioElixir.Repo)
-    |> unique_constraint(:email)
-  end
-
-  defp validate_password(changeset, opts) do
-    changeset
-    |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 80)
-    # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
-    # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
-    |> maybe_hash_password(opts)
-  end
-
-  defp maybe_hash_password(changeset, opts) do
-    hash_password? = Keyword.get(opts, :hash_password, true)
-    password = get_change(changeset, :password)
-
-    if hash_password? && password && changeset.valid? do
-      changeset
-      |> put_change(:hashed_password, Bcrypt.hash_pwd_salt(password))
-      |> delete_change(:password)
-    else
-      changeset
+        sender OhioElixir.Accounts.User.Senders.SendMagicLinkEmail
+      end
     end
   end
 
-  @doc """
-  A user changeset for changing the password.
+  actions do
+    defaults [:read]
 
-  ## Options
-
-    * `:hash_password` - Hashes the password so it can be stored securely
-      in the database and ensures the password field is cleared to prevent
-      leaks in the logs. If password hashing is not needed and clearing the
-      password field is not desired (like when using this changeset for
-      validations on a LiveView form), this option can be set to `false`.
-      Defaults to `true`.
-  """
-  def password_changeset(user, attrs, opts \\ []) do
-    user
-    |> cast(attrs, [:password])
-    |> validate_confirmation(:password, message: "does not match password")
-    |> validate_password(opts)
-  end
-
-  @doc """
-  Verifies the password.
-
-  If there is no user or the user doesn't have a password, we call
-  `Bcrypt.no_user_verify/0` to avoid timing attacks.
-  """
-  def valid_password?(%OhioElixir.Accounts.User{hashed_password: hashed_password}, password)
-      when is_binary(hashed_password) and byte_size(password) > 0 do
-    Bcrypt.verify_pass(password, hashed_password)
-  end
-
-  def valid_password?(_, _) do
-    Bcrypt.no_user_verify()
-    false
-  end
-
-  @doc """
-  Validates the current password otherwise adds an error to the changeset.
-  """
-  def validate_current_password(changeset, password) do
-    if valid_password?(changeset.data, password) do
-      changeset
-    else
-      add_error(changeset, :current_password, "is not valid")
+    read :get_by_subject do
+      description "Get a user by the subject claim in a JWT"
+      argument :subject, :string, allow_nil?: false
+      get? true
+      prepare AshAuthentication.Preparations.FilterBySubject
     end
+
+    read :get_by_email do
+      description "Looks up a user by their email"
+      get_by :email
+    end
+
+    create :sign_in_with_magic_link do
+      description "Sign in or register a user with magic link."
+
+      argument :token, :string do
+        description "The token from the magic link that was sent to the user"
+        allow_nil? false
+      end
+
+      argument :remember_me, :boolean do
+        description "Whether to generate a remember me token"
+        allow_nil? true
+      end
+
+      upsert? true
+      upsert_identity :unique_email
+      upsert_fields [:email]
+
+      # Uses the information from the token to create or sign in the user
+      change AshAuthentication.Strategy.MagicLink.SignInChange
+
+      change {AshAuthentication.Strategy.RememberMe.MaybeGenerateTokenChange,
+              strategy_name: :remember_me}
+
+      metadata :token, :string do
+        allow_nil? false
+      end
+    end
+
+    action :request_magic_link do
+      argument :email, :ci_string do
+        allow_nil? false
+      end
+
+      run AshAuthentication.Strategy.MagicLink.Request
+    end
+  end
+
+  policies do
+    bypass AshAuthentication.Checks.AshAuthenticationInteraction do
+      authorize_if always()
+    end
+  end
+
+  attributes do
+    uuid_primary_key :id
+
+    attribute :email, :ci_string do
+      allow_nil? false
+      public? true
+    end
+  end
+
+  identities do
+    identity :unique_email, [:email]
   end
 end

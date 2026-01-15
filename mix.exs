@@ -5,12 +5,14 @@ defmodule OhioElixir.MixProject do
     [
       app: :ohio_elixir,
       version: "0.1.0",
-      dialyzer: [plt_add_apps: [:nostrum]],
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      compilers: [:phoenix_live_view] ++ Mix.compilers(),
+      listeners: [Phoenix.CodeReloader],
+      consolidate_protocols: Mix.env() != :dev
     ]
   end
 
@@ -20,8 +22,13 @@ defmodule OhioElixir.MixProject do
   def application do
     [
       mod: {OhioElixir.Application, []},
-      extra_applications: [:logger, :runtime_tools],
-      included_applications: [:nostrum]
+      extra_applications: [:logger, :runtime_tools]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [precommit: :test]
     ]
   end
 
@@ -34,31 +41,49 @@ defmodule OhioElixir.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:bcrypt_elixir, "~> 3.0"},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
-      {:ecto_sql, "~> 3.6"},
-      {:gettext, "~> 0.18"},
-      {:jason, "~> 1.3"},
-      {:nostrum, "~> 0.6", runtime: false},
-      {:phoenix, "~> 1.7"},
-      {:phoenix_ecto, "~> 4.4"},
-      {:phoenix_html, "~> 3.2"},
-      {:phoenix_view, "~> 2.0"},
-      {:phoenix_live_view, "~> 0.20"},
-      {:phoenix_live_dashboard, "~> 0.8"},
+      {:picosat_elixir, "~> 0.2"},
+      {:sourceror, "~> 1.8", only: [:dev, :test]},
+      {:oban, "~> 2.0"},
+      {:open_api_spex, "~> 3.0"},
+      {:usage_rules, "~> 0.1", only: [:dev]},
+      {:tidewave, "~> 0.5", only: [:dev]},
+      {:live_debugger, "~> 0.5", only: [:dev]},
+      {:oban_web, "~> 2.0"},
+      {:ash_oban, "~> 0.7"},
+      {:ash_admin, "~> 0.13"},
+      {:ash_authentication_phoenix, "~> 2.0"},
+      {:ash_authentication, "~> 4.0"},
+      {:ash_sqlite, "~> 0.2"},
+      {:ash_json_api, "~> 1.0"},
+      {:ash_phoenix, "~> 2.0"},
+      {:ash, "~> 3.0"},
+      {:igniter, "~> 0.6", only: [:dev, :test]},
+      {:phoenix, "~> 1.8.3"},
+      {:phoenix_ecto, "~> 4.5"},
+      {:ecto_sql, "~> 3.13"},
+      {:ecto_sqlite3, ">= 0.0.0"},
+      {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:plug_cowboy, "~> 2.5"},
-      {:postgrex, ">= 0.0.0"},
-      {:sobelow, "~> 0.8", only: :dev},
-      {:telemetry_metrics, "~> 0.6"},
+      {:phoenix_live_view, "~> 1.1.0"},
+      {:lazy_html, ">= 0.1.0", only: :test},
+      {:phoenix_live_dashboard, "~> 0.8.3"},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:heroicons,
+       github: "tailwindlabs/heroicons",
+       tag: "v2.2.0",
+       sparse: "optimized",
+       app: false,
+       compile: false,
+       depth: 1},
+      {:swoosh, "~> 1.16"},
+      {:req, "~> 0.5"},
+      {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-      {:tzdata, "~> 1.1"},
-
-      # Temporary things to work around silliness between Discord's API and
-      # gun's http handling (see
-      # https://github.com/bdanklin/cowlib#about-the-fork)
-      {:cowlib, "~> 2.11.1", env: :prod, hex: "remedy_cowlib", override: true}
+      {:gettext, "~> 1.0"},
+      {:jason, "~> 1.2"},
+      {:dns_cluster, "~> 0.2.0"},
+      {:bandit, "~> 1.5"}
     ]
   end
 
@@ -70,10 +95,19 @@ defmodule OhioElixir.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
+      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+      test: ["ash.setup --quiet", "test"],
+      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      "assets.build": ["compile", "tailwind ohio_elixir", "esbuild ohio_elixir"],
+      "assets.deploy": [
+        "tailwind ohio_elixir --minify",
+        "esbuild ohio_elixir --minify",
+        "phx.digest"
+      ],
+      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"],
+      "ash.setup": ["ash.setup", "run priv/repo/seeds.exs"]
     ]
   end
 end

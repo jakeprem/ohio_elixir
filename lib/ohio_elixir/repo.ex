@@ -1,5 +1,4 @@
 defmodule OhioElixir.Repo do
-  use Ecto.Repo,
-    otp_app: :ohio_elixir,
-    adapter: Ecto.Adapters.Postgres
+  use AshSqlite.Repo,
+    otp_app: :ohio_elixir
 end

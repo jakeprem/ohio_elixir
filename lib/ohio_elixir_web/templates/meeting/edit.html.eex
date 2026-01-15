@@ -1,7 +1,0 @@
-<div class="container">
-	<h1>Edit Meeting</h1>
-
-	<%= render "form.html", Map.put(assigns, :action, ~p"/meetings/#{@meeting}") %>
-
-	<span><%= link "Back", to: ~p"/meetings" %></span>
-</div>
