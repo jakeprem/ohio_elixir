@@ -86,7 +86,8 @@ defmodule OhioElixir.MixProject do
       {:bandit, "~> 1.5"},
       {:mdex, "~> 0.11"},
       {:hammer, "~> 7.0"},
-      {:ash_rate_limiter, "~> 0.2"}
+      {:ash_rate_limiter, "~> 0.2"},
+      {:atomex, "~> 0.5"}
     ]
   end
 

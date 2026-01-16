@@ -77,6 +77,11 @@ defmodule OhioElixirWeb.Router do
     post "/count", AnalyticsController, :count
   end
 
+  # XML endpoints (feed, sitemap) - no pipeline to avoid session cookies for CDN caching
+  scope "/", OhioElixirWeb do
+    get "/feed.xml", FeedController, :index
+  end
+
   # Routes that require authentication
   scope "/", OhioElixirWeb do
     pipe_through [:browser, :require_auth]
