@@ -67,7 +67,7 @@ defimpl OhioElixir.OGImage.Source, for: OhioElixir.Events.Event do
     date = format_date(event.starts_at, event.timezone)
     location = format_location(event)
 
-    "#{date} · #{location}"
+    "#{location} · #{date}"
   end
 
   defp format_date(starts_at, timezone) do

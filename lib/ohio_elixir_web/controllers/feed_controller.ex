@@ -16,7 +16,10 @@ defmodule OhioElixirWeb.FeedController do
 
     conn
     |> put_resp_content_type("application/atom+xml")
-    |> put_resp_header("cache-control", "public, max-age=900, stale-while-revalidate=3600, stale-if-error=86400")
+    |> put_resp_header(
+      "cache-control",
+      "public, max-age=900, stale-while-revalidate=3600, stale-if-error=86400"
+    )
     |> put_resp_header("cdn-cache-control", "max-age=900")
     |> send_resp(200, feed)
   end

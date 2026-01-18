@@ -9,7 +9,7 @@ defmodule OhioElixir.OGImage.Builder do
 
   # Bump this when you change the og-generator.tsx design
   # to bust social media caches and force re-fetching
-  @og_version "1"
+  @og_version "4"
 
   @doc """
   Builds a signed URL for an OG image served by our Phoenix app.

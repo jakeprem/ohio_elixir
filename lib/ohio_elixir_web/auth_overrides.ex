@@ -10,8 +10,12 @@ defmodule OhioElixirWeb.AuthOverrides do
   # For a complete reference, see https://hexdocs.pm/ash_authentication_phoenix/ui-overrides.html
 
   override AshAuthentication.Phoenix.Components.Banner do
-    set :image_url, "https://placehold.co/400x100?text=Ohio+Elixir"
-    set :dark_image_url, "https://placehold.co/400x100?text=Ohio+Elixir"
+    set :root_class, "flex items-center justify-center gap-4 py-6 px-12"
+    set :image_url, "/images/logo.webp"
+    set :image_class, "h-20 w-auto"
+    set :dark_image_url, nil
+    set :text, "Ohio Elixir"
+    set :text_class, "text-4xl font-bold"
   end
 
   override AshAuthentication.Phoenix.Components.SignIn do

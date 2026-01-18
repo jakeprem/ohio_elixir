@@ -126,7 +126,10 @@ defmodule OhioElixirWeb.Layouts do
   end
 
   defp default_og_image_url do
-    OhioElixirWeb.Endpoint.url() <> "/images/og-default.png"
+    OhioElixir.OGImage.Builder.build_url(%{
+      title: "Ohio Elixir",
+      subtitle: "Ohio's community of Elixir developers"
+    })
   end
 
   defp current_url_from_conn(nil), do: OhioElixirWeb.Endpoint.url()
@@ -386,8 +389,13 @@ defmodule OhioElixirWeb.Layouts do
         <!-- Desktop navbar (hidden on mobile) -->
         <nav class="hidden md:block bg-base-100 border-b border-base-300">
           <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/" data-instant class="text-xl font-bold hover:text-primary transition-colors">
-              Ohio Elixir
+            <a
+              href="/"
+              data-instant
+              class="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <img src="/images/logo.webp" alt="Ohio Elixir" class="h-10 w-auto" />
+              <span class="text-xl font-bold">Ohio Elixir</span>
             </a>
             <div class="flex items-center gap-6">
               <a
@@ -413,8 +421,12 @@ defmodule OhioElixirWeb.Layouts do
         <!-- Mobile navbar (visible on mobile only) -->
         <nav class="md:hidden bg-base-100 border-b border-base-300">
           <div class="px-4 py-3 flex justify-between items-center">
-            <a href="/" data-instant class="text-xl font-bold hover:text-primary transition-colors">
-              Ohio Elixir
+            <a
+              href="/"
+              data-instant
+              class="flex items-center hover:opacity-80 transition-opacity"
+            >
+              <img src="/images/logo.webp" alt="Ohio Elixir" class="h-10 w-auto" />
             </a>
             <label for="mobile-drawer" class="btn btn-ghost btn-square btn-sm">
               <.icon name="hero-bars-3" class="size-6" />
