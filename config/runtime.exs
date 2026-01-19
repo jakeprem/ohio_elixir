@@ -124,4 +124,9 @@ if config_env() == :prod do
       raise "Missing environment variable OG_IMAGE_HMAC_SECRET"
 
   config :ohio_elixir, :og_image, hmac_secret: og_hmac_secret
+
+  # Cloudflare Turnstile (required for guest RSVP bot protection)
+  config :ohio_elixir, :turnstile,
+    site_key: System.fetch_env!("TURNSTILE_SITE_KEY"),
+    secret_key: System.fetch_env!("TURNSTILE_SECRET_KEY")
 end

@@ -8,7 +8,10 @@ defmodule OhioElixirWeb.RsvpLive do
 
   alias OhioElixir.Events
   alias OhioElixir.Events.Rsvp
+  alias OhioElixir.Turnstile
   alias Phoenix.LiveView.JS
+
+  import OhioElixirWeb.Components.Turnstile
 
   on_mount {OhioElixirWeb.LiveUserAuth, :current_user}
 
@@ -185,8 +188,31 @@ defmodule OhioElixirWeb.RsvpLive do
   end
 
   @impl true
-  def handle_event("submit", %{"rsvp" => params}, socket) do
+  def handle_event("submit", %{"rsvp" => params, "cf-turnstile-response" => turnstile_token}, socket) do
     socket = assign(socket, submitting: true)
+
+    case Turnstile.verify(turnstile_token) do
+      :ok ->
+        submit_guest_rsvp(socket, params)
+
+      {:error, _reason} ->
+        {:noreply,
+         assign(socket,
+           error_message: "Human verification failed. Please try again.",
+           submitting: false
+         )}
+    end
+  end
+
+  def handle_event("submit", %{"rsvp" => _params}, socket) do
+    {:noreply,
+     assign(socket,
+       error_message: "Please complete the human verification.",
+       submitting: false
+     )}
+  end
+
+  defp submit_guest_rsvp(socket, params) do
     attendance_mode = socket.assigns.attendance_mode
 
     params =
@@ -200,7 +226,8 @@ defmodule OhioElixirWeb.RsvpLive do
          assign(socket,
            existing_rsvp: rsvp,
            attendance_mode: rsvp.attendance_mode || attendance_mode,
-           submitting: false
+           submitting: false,
+           error_message: nil
          )}
 
       {:error, form} ->
@@ -261,11 +288,18 @@ defmodule OhioElixirWeb.RsvpLive do
               rsvp_status={rsvp_status(@existing_rsvp)}
               current_user={@current_user}
               submitting={@submitting}
-              form={@form}
             />
           </div>
         </div>
       <% end %>
+
+      <%!-- Guest RSVP Modal - only rendered when no existing RSVP --%>
+      <.guest_rsvp_modal
+        :if={is_nil(@current_user) && is_nil(@existing_rsvp)}
+        form={@form}
+        submitting={@submitting}
+        event_title={@event.title}
+      />
     </div>
     """
   end
@@ -415,50 +449,63 @@ defmodule OhioElixirWeb.RsvpLive do
             </button>
           </div>
         <% else %>
-          <%= if @form do %>
-            <.form
-              for={@form}
-              id="rsvp-form"
-              phx-change="validate"
-              phx-submit="submit"
-              class="space-y-3"
-              phx-remove={
-                JS.transition(
-                  {"motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150", "", ""},
-                  time: 150
-                )
-              }
-            >
-              <div>
-                <.input
-                  field={@form[:email]}
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  class="input input-bordered w-full"
-                />
-              </div>
-              <button
-                type="submit"
-                class="btn btn-primary w-full"
-                disabled={@submitting || !@form.source.valid?}
-              >
-                <%= if @submitting do %>
-                  <span class="loading loading-spinner loading-sm"></span>
-                <% else %>
-                  <.icon name="hero-hand-raised" class="w-5 h-5" />
-                <% end %>
-                RSVP
-              </button>
-              <p class="text-xs text-base-content/60 text-center">
-                We'll send event updates to this email
-              </p>
-            </.form>
-          <% end %>
+          <%!-- Guest: button opens modal --%>
+          <div id="guest-rsvp-button">
+            <button type="button" phx-click={show_modal("guest-rsvp-modal")} class="btn btn-primary w-full">
+              <.icon name="hero-hand-raised" class="w-5 h-5" /> RSVP
+            </button>
+            <p class="text-xs text-base-content/60 text-center mt-2">
+              We'll send event updates to your email
+            </p>
+          </div>
         <% end %>
       <% _ -> %>
         <%!-- Loading state renders nothing --%>
     <% end %>
+    """
+  end
+
+  defp guest_rsvp_modal(assigns) do
+    ~H"""
+    <.modal id="guest-rsvp-modal">
+      <h3 class="text-lg font-bold mb-4">RSVP to {@event_title}</h3>
+
+      <.form
+        for={@form}
+        id="guest-rsvp-form"
+        phx-change="validate"
+        phx-submit="submit"
+        class="space-y-4"
+      >
+        <.input
+          field={@form[:email]}
+          type="email"
+          label="Email"
+          placeholder="you@example.com"
+          required
+        />
+
+        <.turnstile id="guest-rsvp-turnstile" />
+
+        <div class="modal-action">
+          <button type="button" phx-click={hide_modal("guest-rsvp-modal")} class="btn">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            disabled={@submitting}
+          >
+            <%= if @submitting do %>
+              <span class="loading loading-spinner loading-sm"></span>
+            <% else %>
+              <.icon name="hero-hand-raised" class="w-5 h-5" />
+            <% end %>
+            RSVP
+          </button>
+        </div>
+      </.form>
+    </.modal>
     """
   end
 

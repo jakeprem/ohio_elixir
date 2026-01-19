@@ -96,3 +96,23 @@ config :ohio_elixir, :goatcounter,
 
 # OG image HMAC signing (dev)
 config :ohio_elixir, :og_image, hmac_secret: "dev-secret-not-for-production"
+
+# Cloudflare Turnstile test keys for development
+# See: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+#
+# Uncomment ONE of the following blocks:
+
+# Always pass (visible widget)
+config :ohio_elixir, :turnstile,
+  site_key: "1x00000000000000000000AA",
+  secret_key: "1x0000000000000000000000000000000AA"
+
+# Always block
+# config :ohio_elixir, :turnstile,
+#   site_key: "2x00000000000000000000AB",
+#   secret_key: "2x0000000000000000000000000000000AB"
+
+# Force interactive challenge
+# config :ohio_elixir, :turnstile,
+#   site_key: "3x00000000000000000000FF",
+#   secret_key: "3x0000000000000000000000000000000FF"

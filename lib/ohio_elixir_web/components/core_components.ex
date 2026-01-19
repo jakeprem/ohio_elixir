@@ -617,4 +617,35 @@ defmodule OhioElixirWeb.CoreComponents do
     <span class={["badge badge-sm", @class]}>{@label}</span>
     """
   end
+
+  @doc """
+  Renders a modal using DaisyUI with JS.add_class/remove_class.
+
+  ## Examples
+
+      <.modal id="my-modal">
+        <h3 class="text-lg font-bold">Modal Title</h3>
+        <p>Modal content here</p>
+      </.modal>
+
+  Open with: `phx-click={show_modal("my-modal")}`
+  Close with: `phx-click={hide_modal("my-modal")}`
+  """
+  attr :id, :string, required: true
+  attr :class, :string, default: nil
+  slot :inner_block, required: true
+
+  def modal(assigns) do
+    ~H"""
+    <div id={@id} class="modal" role="dialog">
+      <div class={["modal-box", @class]}>
+        {render_slot(@inner_block)}
+      </div>
+      <div class="modal-backdrop" phx-click={hide_modal(@id)}></div>
+    </div>
+    """
+  end
+
+  def show_modal(id), do: JS.add_class("modal-open", to: "##{id}")
+  def hide_modal(id), do: JS.remove_class("modal-open", to: "##{id}")
 end
