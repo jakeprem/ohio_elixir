@@ -7,8 +7,6 @@ defmodule OhioElixir.Events.Event do
     extensions: [AshAdmin.Resource, AshJsonApi.Resource],
     primary_read_warning?: false
 
-  @visible_event_statuses [:published, :cancelled]
-
   sqlite do
     table "events"
     repo OhioElixir.Repo
@@ -53,7 +51,7 @@ defmodule OhioElixir.Events.Event do
         default :all
       end
 
-      prepare build(filter: expr(visible?)) do
+      prepare build(filter: expr(public?)) do
         where argument_equals(:visible_only, true)
       end
 
@@ -91,14 +89,13 @@ defmodule OhioElixir.Events.Event do
       ]
 
       change relate_actor(:created_by)
-      change set_attribute(:status, :draft)
     end
 
     update :publish do
       description "Publish a draft event to make it publicly visible."
       require_atomic? false
 
-      change set_attribute(:status, :published)
+      change set_attribute(:public_at, &DateTime.utc_now/0)
 
       validate present([:title, :starts_at])
       validate {OhioElixir.Events.Validations.RequiresLocationForFormat, []}
@@ -106,14 +103,14 @@ defmodule OhioElixir.Events.Event do
 
     update :cancel do
       description "Cancel an event."
-      change set_attribute(:status, :cancelled)
+      change set_attribute(:cancelled, true)
     end
   end
 
   policies do
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
-      authorize_if expr(visible?)
+      authorize_if expr(public?)
     end
 
     policy action_type([:create, :update, :destroy]) do
@@ -133,11 +130,12 @@ defmodule OhioElixir.Events.Event do
     attribute :description, :string, public?: true, constraints: [max_length: 10_000]
     attribute :short_description, :string, public?: true, constraints: [max_length: 300]
 
-    attribute :status, :atom do
+    attribute :public_at, :utc_datetime, public?: true
+
+    attribute :cancelled, :boolean do
       allow_nil? false
-      default :draft
+      default false
       public? true
-      constraints one_of: [:draft, :published, :cancelled]
     end
 
     attribute :format, :atom do
@@ -192,7 +190,10 @@ defmodule OhioElixir.Events.Event do
                 )
               )
 
-    calculate :visible?, :boolean, expr(status in @visible_event_statuses)
+    # Event is public when public_at is set and not in the future
+    # Note: nil <= now() evaluates to nil (falsy) so this handles drafts too
+    calculate :public?, :boolean, expr(public_at <= now())
+
     calculate :upcoming?, :boolean, expr(starts_at > now())
     calculate :past?, :boolean, expr(starts_at <= now())
 
@@ -207,4 +208,20 @@ defmodule OhioElixir.Events.Event do
                 end
               )
   end
+
+  @doc "Returns true if the event is a draft (not yet published)."
+  def draft?(%{public_at: nil}), do: true
+  def draft?(%{public_at: _}), do: false
+
+  @doc "Returns true if the event is public (published and publish date has passed)."
+  def public?(%{public_at: nil}), do: false
+  def public?(%{public_at: public_at}), do: DateTime.compare(public_at, DateTime.utc_now()) != :gt
+
+  @doc "Returns true if the event is scheduled (publish date is in the future)."
+  def scheduled?(%{public_at: nil}), do: false
+  def scheduled?(%{public_at: public_at}), do: DateTime.compare(public_at, DateTime.utc_now()) == :gt
+
+  @doc "Returns true if the event is cancelled."
+  def cancelled?(%{cancelled: cancelled}), do: cancelled
+
 end

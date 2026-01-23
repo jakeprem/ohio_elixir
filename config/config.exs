@@ -7,6 +7,9 @@
 # General application configuration
 import Config
 
+# Configure timezone database for DateTime.shift_zone/2
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
 config :ash_oban, pro?: false
 
 config :ohio_elixir, :ash_rate_limiter, hammer: OhioElixir.RateLimiter

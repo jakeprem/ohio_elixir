@@ -7,8 +7,8 @@
       "source": "jti",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": true
+      "primary_key?": true,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -17,8 +17,8 @@
       "source": "subject",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -27,8 +27,8 @@
       "source": "expires_at",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -37,8 +37,8 @@
       "source": "purpose",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -47,8 +47,8 @@
       "source": "extra_data",
       "references": null,
       "allow_nil?": true,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -57,8 +57,8 @@
       "source": "created_at",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     },
     {
       "default": "nil",
@@ -67,12 +67,12 @@
       "source": "updated_at",
       "references": null,
       "allow_nil?": false,
-      "generated?": false,
-      "primary_key?": false
+      "primary_key?": false,
+      "generated?": false
     }
   ],
   "table": "tokens",
-  "hash": "09025932C6958B732C04E02C368695B9139AE5824CA63698CF604EEB33823703",
+  "hash": "40CE0B9E85E9136E93C12DF051E46F262AB930F70B077C3329C7CDE1A3D0DDA8",
   "repo": "Elixir.OhioElixir.Repo",
   "multitenancy": {
     "global": null,
@@ -81,8 +81,8 @@
   },
   "identities": [],
   "strict?": false,
-  "base_filter": null,
   "custom_indexes": [],
   "custom_statements": [],
+  "base_filter": null,
   "has_create_action": true
 }

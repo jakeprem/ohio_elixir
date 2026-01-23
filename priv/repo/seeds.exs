@@ -138,23 +138,32 @@ upcoming_hybrid =
 Events.publish_event!(upcoming_hybrid, actor: admin)
 IO.puts("Created upcoming event: #{upcoming_hybrid.title}")
 
-# Create RSVPs - use the event structs directly since they have IDs
+# Create RSVPs
+# We use Ash.Seed to directly create RSVPs, bypassing authorization,
+# since the events were just published and may not pass the public_at <= now() check
+# due to timing precision issues with SQLite
 IO.puts("Creating RSVPs...")
-IO.puts("upcoming_inperson.id = #{inspect(upcoming_inperson.id)}")
-IO.puts("upcoming_hybrid.id = #{inspect(upcoming_hybrid.id)}")
 
-if upcoming_inperson.id do
-  Events.rsvp_to_event!(upcoming_inperson.id, actor: user)
-  IO.puts("Created RSVP for #{user.email} to #{upcoming_inperson.title}")
-end
+Ash.Seed.seed!(OhioElixir.Events.Rsvp, %{
+  user_id: user.id,
+  event_id: upcoming_inperson.id,
+  status: :confirmed
+})
+IO.puts("Created RSVP for #{user.email} to #{upcoming_inperson.title}")
 
-if upcoming_hybrid.id do
-  Events.rsvp_to_event!(upcoming_hybrid.id, actor: user)
-  IO.puts("Created RSVP for #{user.email} to #{upcoming_hybrid.title}")
+Ash.Seed.seed!(OhioElixir.Events.Rsvp, %{
+  user_id: user.id,
+  event_id: upcoming_hybrid.id,
+  status: :confirmed
+})
+IO.puts("Created RSVP for #{user.email} to #{upcoming_hybrid.title}")
 
-  Events.rsvp_to_event!(upcoming_hybrid.id, actor: admin)
-  IO.puts("Created RSVP for #{admin.email} to #{upcoming_hybrid.title}")
-end
+Ash.Seed.seed!(OhioElixir.Events.Rsvp, %{
+  user_id: admin.id,
+  event_id: upcoming_hybrid.id,
+  status: :confirmed
+})
+IO.puts("Created RSVP for #{admin.email} to #{upcoming_hybrid.title}")
 
 IO.puts("\nSeed data created successfully!")
 IO.puts("Admin user: admin@ohioelixir.com")

@@ -10,9 +10,9 @@ defmodule OhioElixir.Events.Validations.RequiresLocationForFormat do
 
   @impl true
   def validate(changeset, _opts, _context) do
-    status = Ash.Changeset.get_attribute(changeset, :status)
+    public_at = Ash.Changeset.get_attribute(changeset, :public_at)
 
-    if status == :published do
+    if not is_nil(public_at) do
       validate_location_for_format(changeset)
     else
       :ok

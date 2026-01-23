@@ -34,7 +34,27 @@
       "default": "nil",
       "size": null,
       "type": "text",
-      "source": "status",
+      "source": "short_description",
+      "references": null,
+      "allow_nil?": true,
+      "primary_key?": false,
+      "generated?": false
+    },
+    {
+      "default": "nil",
+      "size": null,
+      "type": "utc_datetime",
+      "source": "public_at",
+      "references": null,
+      "allow_nil?": true,
+      "primary_key?": false,
+      "generated?": false
+    },
+    {
+      "default": "nil",
+      "size": null,
+      "type": "boolean",
+      "source": "cancelled",
       "references": null,
       "allow_nil?": false,
       "primary_key?": false,
@@ -133,8 +153,8 @@
           "strategy": null,
           "attribute": null
         },
-        "primary_key?": true,
         "destination_attribute": "id",
+        "primary_key?": true,
         "on_update": null,
         "on_delete": null,
         "deferrable": false,
@@ -158,8 +178,8 @@
           "strategy": null,
           "attribute": null
         },
-        "primary_key?": true,
         "destination_attribute": "id",
+        "primary_key?": true,
         "on_update": null,
         "on_delete": null,
         "deferrable": false,
@@ -172,7 +192,7 @@
     }
   ],
   "table": "events",
-  "hash": "79E93C5FCBD5EAB3BE60CD9DC450AE5A73A285C92018245F4667E8AA3A79E7AA",
+  "hash": "08659E8349D025B316EA671E4877E0F5AE09DB87BDC88B456FDBE6CA9BD59136",
   "repo": "Elixir.OhioElixir.Repo",
   "multitenancy": {
     "global": null,
@@ -182,7 +202,7 @@
   "identities": [],
   "strict?": false,
   "custom_indexes": [],
-  "base_filter": null,
   "custom_statements": [],
+  "base_filter": null,
   "has_create_action": true
 }

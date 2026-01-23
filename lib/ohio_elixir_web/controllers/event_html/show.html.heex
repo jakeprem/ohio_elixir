@@ -18,14 +18,16 @@
       <div class="flex flex-wrap items-center gap-2">
         <.format_badge format={@event.format} />
         <%= if Ash.can?({@event, :update}, @current_user) do %>
-          <span class={[
-            "badge badge-sm",
-            @event.status == :draft && "badge-warning",
-            @event.status == :published && "badge-success",
-            @event.status == :cancelled && "badge-error"
-          ]}>
-            {Phoenix.Naming.humanize(@event.status)}
-          </span>
+          <%= cond do %>
+            <% Event.cancelled?(@event) -> %>
+              <span class="badge badge-sm badge-error">Cancelled</span>
+            <% Event.draft?(@event) -> %>
+              <span class="badge badge-sm badge-warning">Draft</span>
+            <% Event.scheduled?(@event) -> %>
+              <span class="badge badge-sm badge-info">Scheduled</span>
+            <% true -> %>
+              <span class="badge badge-sm badge-success">Published</span>
+          <% end %>
         <% end %>
         <%= if @event.rsvp_count && @event.rsvp_count > 0 do %>
           <span class="flex items-center gap-1 text-base-content/60">
@@ -131,7 +133,7 @@
               >
                 <.icon name="hero-pencil" class="w-4 h-4" /> Edit Event
               </.link>
-              <%= if @event.status == :draft and Ash.can?({@event, :publish}, @current_user) do %>
+              <%= if Event.draft?(@event) and Ash.can?({@event, :publish}, @current_user) do %>
                 <.link
                   href={~p"/events/#{@event.id}/publish"}
                   method="post"
@@ -140,7 +142,7 @@
                   <.icon name="hero-check-circle" class="w-4 h-4" /> Publish Event
                 </.link>
               <% end %>
-              <%= if @event.status == :published and Ash.can?({@event, :cancel}, @current_user) do %>
+              <%= if Event.public?(@event) and not Event.cancelled?(@event) and Ash.can?({@event, :cancel}, @current_user) do %>
                 <.link
                   href={~p"/events/#{@event.id}/cancel"}
                   method="post"

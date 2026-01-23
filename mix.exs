@@ -87,7 +87,8 @@ defmodule OhioElixir.MixProject do
       {:mdex, "~> 0.11"},
       {:hammer, "~> 7.0"},
       {:ash_rate_limiter, "~> 0.2"},
-      {:atomex, "~> 0.5"}
+      {:atomex, "~> 0.5"},
+      {:tz, "~> 0.28"}
     ]
   end
 
@@ -111,7 +112,7 @@ defmodule OhioElixir.MixProject do
         "phx.digest"
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"],
-      "ash.setup": ["ash.setup", "run priv/repo/seeds.exs"]
+      seed: ["ash.setup", "run priv/repo/seeds.exs"]
     ]
   end
 end

@@ -8,6 +8,7 @@ defmodule OhioElixirWeb.EventFormLive do
   alias OhioElixir.Events
   alias OhioElixir.Events.Event
   alias OhioElixir.Events.Venue
+  alias OhioElixirWeb.Helpers.Timezone
 
   on_mount {OhioElixirWeb.LiveUserAuth, :live_user_required}
 
@@ -42,7 +43,8 @@ defmodule OhioElixirWeb.EventFormLive do
         Event
         |> AshPhoenix.Form.for_create(:create,
           as: "event",
-          actor: current_user
+          actor: current_user,
+          transform_params: &transform_datetime_params/3
         )
         |> to_form()
 
@@ -50,6 +52,9 @@ defmodule OhioElixirWeb.EventFormLive do
       |> assign(page_title: "New Event")
       |> assign(event: nil)
       |> assign(form: form)
+      |> assign(starts_at_local: nil)
+      |> assign(ends_at_local: nil)
+      |> assign(public_at_local: nil)
     else
       socket
       |> put_flash(:error, "You don't have permission to create events")
@@ -63,11 +68,14 @@ defmodule OhioElixirWeb.EventFormLive do
     case Events.get_event(id, actor: current_user) do
       {:ok, event} ->
         if Ash.can?({event, :update}, current_user) do
+          tz = event.timezone || Timezone.default_timezone()
+
           form =
             event
             |> AshPhoenix.Form.for_update(:update,
               as: "event",
-              actor: current_user
+              actor: current_user,
+              transform_params: &transform_datetime_params/3
             )
             |> to_form()
 
@@ -75,6 +83,9 @@ defmodule OhioElixirWeb.EventFormLive do
           |> assign(page_title: "Edit Event")
           |> assign(event: event)
           |> assign(form: form)
+          |> assign(starts_at_local: Timezone.utc_to_naive(event.starts_at, tz))
+          |> assign(ends_at_local: Timezone.utc_to_naive(event.ends_at, tz))
+          |> assign(public_at_local: Timezone.utc_to_naive(event.public_at, tz))
         else
           socket
           |> put_flash(:error, "You don't have permission to edit this event")
@@ -222,8 +233,19 @@ defmodule OhioElixirWeb.EventFormLive do
             <h2 class="text-lg font-bold">Date & Time</h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <.input field={@form[:starts_at]} type="datetime-local" label="Start Time" required />
-              <.input field={@form[:ends_at]} type="datetime-local" label="End Time" />
+              <.input
+                field={@form[:starts_at]}
+                type="datetime-local"
+                label="Start Time"
+                value={@starts_at_local}
+                required
+              />
+              <.input
+                field={@form[:ends_at]}
+                type="datetime-local"
+                label="End Time"
+                value={@ends_at_local}
+              />
             </div>
 
             <.input
@@ -302,6 +324,22 @@ defmodule OhioElixirWeb.EventFormLive do
             <.input field={@form[:capacity]} type="number" label="Capacity (optional)" min="1" />
           </div>
 
+          <div class="border-2 border-primary/30 bg-primary/5 p-6 space-y-4">
+            <h2 class="text-lg font-bold">Publishing</h2>
+
+            <.input
+              field={@form[:public_at]}
+              type="datetime-local"
+              label="Publish At"
+              value={@public_at_local}
+            />
+            <p class="text-sm text-base-content/60 -mt-2">
+              Leave blank for draft. Set to past/now for immediate publish, future for scheduled.
+            </p>
+
+            <.input field={@form[:cancelled]} type="checkbox" label="Cancelled" />
+          </div>
+
           <div class="flex gap-4 justify-end">
             <.link
               navigate={if @live_action == :edit, do: ~p"/events/#{@event.id}", else: ~p"/events"}
@@ -327,5 +365,22 @@ defmodule OhioElixirWeb.EventFormLive do
       {"Pacific Time (America/Los_Angeles)", "America/Los_Angeles"},
       {"UTC", "Etc/UTC"}
     ]
+  end
+
+  # Transforms datetime form params from event timezone to UTC before validation/submission
+  defp transform_datetime_params(_form, params, _context) do
+    timezone = params["timezone"] || Timezone.default_timezone()
+
+    params
+    |> convert_datetime_to_utc("starts_at", timezone)
+    |> convert_datetime_to_utc("ends_at", timezone)
+    |> convert_datetime_to_utc("public_at", timezone)
+  end
+
+  defp convert_datetime_to_utc(params, field, timezone) do
+    case Timezone.naive_to_utc(params[field], timezone) do
+      nil -> params
+      utc_dt -> Map.put(params, field, utc_dt)
+    end
   end
 end

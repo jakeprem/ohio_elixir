@@ -6,6 +6,8 @@ defmodule OhioElixirWeb.EventHTML do
   """
   use OhioElixirWeb, :html
 
+  alias OhioElixir.Events.Event
+
   embed_templates "event_html/*"
 
   attr :label, :string, required: true
@@ -49,10 +51,10 @@ defmodule OhioElixirWeb.EventHTML do
               )}
             </span>
             <.format_badge format={@event.format} />
-            <%= if @event.status == :draft do %>
+            <%= if Event.draft?(@event) do %>
               <span class="badge badge-warning badge-sm">Draft</span>
             <% end %>
-            <%= if @event.status == :cancelled do %>
+            <%= if Event.cancelled?(@event) do %>
               <span class="badge badge-error badge-sm">Cancelled</span>
             <% end %>
           </div>

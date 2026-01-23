@@ -14,36 +14,6 @@
       "default": "nil",
       "size": null,
       "type": "text",
-      "source": "title",
-      "references": null,
-      "allow_nil?": false,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "text",
-      "source": "description",
-      "references": null,
-      "allow_nil?": true,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "text",
-      "source": "short_description",
-      "references": null,
-      "allow_nil?": true,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "text",
       "source": "status",
       "references": null,
       "allow_nil?": false,
@@ -54,27 +24,17 @@
       "default": "nil",
       "size": null,
       "type": "text",
-      "source": "format",
+      "source": "notes",
       "references": null,
-      "allow_nil?": false,
+      "allow_nil?": true,
       "primary_key?": false,
       "generated?": false
     },
     {
       "default": "nil",
       "size": null,
-      "type": "utc_datetime",
-      "source": "starts_at",
-      "references": null,
-      "allow_nil?": false,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "utc_datetime",
-      "source": "ends_at",
+      "type": "boolean",
+      "source": "attended",
       "references": null,
       "allow_nil?": true,
       "primary_key?": false,
@@ -84,27 +44,7 @@
       "default": "nil",
       "size": null,
       "type": "text",
-      "source": "timezone",
-      "references": null,
-      "allow_nil?": false,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "text",
-      "source": "meeting_url",
-      "references": null,
-      "allow_nil?": true,
-      "primary_key?": false,
-      "generated?": false
-    },
-    {
-      "default": "nil",
-      "size": null,
-      "type": "bigint",
-      "source": "capacity",
+      "source": "attendance_mode",
       "references": null,
       "allow_nil?": true,
       "primary_key?": false,
@@ -134,19 +74,19 @@
       "default": "nil",
       "size": null,
       "type": "uuid",
-      "source": "created_by_id",
+      "source": "event_id",
       "references": {
-        "name": "events_created_by_id_fkey",
-        "table": "users",
+        "name": "event_rsvps_event_id_fkey",
+        "table": "events",
         "multitenancy": {
           "global": null,
-          "attribute": null,
-          "strategy": null
+          "strategy": null,
+          "attribute": null
         },
-        "primary_key?": true,
         "destination_attribute": "id",
-        "on_delete": null,
+        "primary_key?": true,
         "on_update": null,
+        "on_delete": null,
         "deferrable": false,
         "destination_attribute_default": null,
         "destination_attribute_generated": null
@@ -159,40 +99,50 @@
       "default": "nil",
       "size": null,
       "type": "uuid",
-      "source": "venue_id",
+      "source": "user_id",
       "references": {
-        "name": "events_venue_id_fkey",
-        "table": "venues",
+        "name": "event_rsvps_user_id_fkey",
+        "table": "users",
         "multitenancy": {
           "global": null,
-          "attribute": null,
-          "strategy": null
+          "strategy": null,
+          "attribute": null
         },
-        "primary_key?": true,
         "destination_attribute": "id",
-        "on_delete": null,
+        "primary_key?": true,
         "on_update": null,
+        "on_delete": null,
         "deferrable": false,
         "destination_attribute_default": null,
         "destination_attribute_generated": null
       },
-      "allow_nil?": true,
+      "allow_nil?": false,
       "primary_key?": false,
       "generated?": false
     }
   ],
-  "table": "events",
-  "hash": "4529AD0BB0E4ED0F4A64BE51EA7954CCF355E52E968A158EF469A8D073E3A9BD",
+  "table": "event_rsvps",
+  "hash": "6AE3C2E417D58B8BBC5424AB08FDD1E5F0DC0F550115EB8417F08301C5363923",
   "repo": "Elixir.OhioElixir.Repo",
   "multitenancy": {
     "global": null,
-    "attribute": null,
-    "strategy": null
+    "strategy": null,
+    "attribute": null
   },
-  "identities": [],
+  "identities": [
+    {
+      "name": "unique_user_event",
+      "keys": [
+        "user_id",
+        "event_id"
+      ],
+      "base_filter": null,
+      "index_name": "event_rsvps_unique_user_event_index"
+    }
+  ],
   "strict?": false,
   "custom_indexes": [],
-  "base_filter": null,
   "custom_statements": [],
+  "base_filter": null,
   "has_create_action": true
 }

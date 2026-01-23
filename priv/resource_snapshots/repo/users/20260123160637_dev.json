@@ -29,10 +29,40 @@
       "allow_nil?": false,
       "primary_key?": false,
       "generated?": false
+    },
+    {
+      "default": "nil",
+      "size": null,
+      "type": "text",
+      "source": "first_name",
+      "references": null,
+      "allow_nil?": true,
+      "primary_key?": false,
+      "generated?": false
+    },
+    {
+      "default": "nil",
+      "size": null,
+      "type": "text",
+      "source": "last_name",
+      "references": null,
+      "allow_nil?": true,
+      "primary_key?": false,
+      "generated?": false
+    },
+    {
+      "default": "nil",
+      "size": null,
+      "type": "map",
+      "source": "preferences",
+      "references": null,
+      "allow_nil?": false,
+      "primary_key?": false,
+      "generated?": false
     }
   ],
   "table": "users",
-  "hash": "24640841E0CE692A4B18CF2B416617E0AFF6D795383E8F87BA611DDCB470EF4F",
+  "hash": "796958F82C915B8D40D65098142991386620FF82E34EB8AA5BE2B5AD2B9576F7",
   "repo": "Elixir.OhioElixir.Repo",
   "multitenancy": {
     "global": null,
@@ -51,7 +81,7 @@
   ],
   "strict?": false,
   "custom_indexes": [],
-  "base_filter": null,
   "custom_statements": [],
+  "base_filter": null,
   "has_create_action": true
 }

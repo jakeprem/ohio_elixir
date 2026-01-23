@@ -132,7 +132,7 @@
   "identities": [],
   "strict?": false,
   "custom_indexes": [],
-  "base_filter": null,
   "custom_statements": [],
+  "base_filter": null,
   "has_create_action": true
 }
