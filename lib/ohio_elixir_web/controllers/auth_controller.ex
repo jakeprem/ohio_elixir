@@ -35,6 +35,9 @@ defmodule OhioElixirWeb.AuthController do
           You can confirm your account using the link we sent to you, or by resetting your password.
           """
 
+        {{:magic_link, _}, _} ->
+          "Invalid or expired sign-in link. Please request a new one."
+
         _ ->
           "Incorrect email or password"
       end

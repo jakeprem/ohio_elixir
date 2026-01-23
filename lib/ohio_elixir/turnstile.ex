@@ -1,4 +1,6 @@
 defmodule OhioElixir.Turnstile do
+  require Logger
+
   @moduledoc """
   Cloudflare Turnstile verification for bot protection.
 
@@ -68,12 +70,15 @@ defmodule OhioElixir.Turnstile do
         :ok
 
       {:ok, %{body: %{"success" => false, "error-codes" => codes}}} ->
+        maybe_log_config_error(codes)
         {:error, codes}
 
-      {:ok, %{body: body}} ->
-        {:error, {:unexpected_response, body}}
+      {:ok, %{body: resp_body}} ->
+        Logger.error("Turnstile::UnexpectedResponse: #{inspect(resp_body)}")
+        {:error, {:unexpected_response, resp_body}}
 
       {:error, reason} ->
+        Logger.error("Turnstile::RequestFailed: #{inspect(reason)}")
         {:error, {:request_failed, reason}}
     end
   end
@@ -81,18 +86,19 @@ defmodule OhioElixir.Turnstile do
   defp maybe_add_ip(body, nil), do: body
   defp maybe_add_ip(body, ip), do: Map.put(body, :remoteip, ip)
 
+  # Only log configuration errors, not user failures
+  @config_errors ["missing-input-secret", "invalid-input-secret", "bad-request"]
+  defp maybe_log_config_error(codes) do
+    if Enum.any?(codes, &(&1 in @config_errors)) do
+      Logger.error("Turnstile::ConfigurationError: #{inspect(codes)}")
+    end
+  end
+
   @doc """
   Returns the public site key for client-side widget rendering.
   """
   def site_key do
     Application.get_env(:ohio_elixir, :turnstile)[:site_key]
-  end
-
-  @doc """
-  Returns whether Turnstile is configured and enabled.
-  """
-  def enabled? do
-    site_key() != nil && secret_key() != nil
   end
 
   defp secret_key do

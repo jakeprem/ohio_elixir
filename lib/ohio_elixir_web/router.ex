@@ -104,6 +104,7 @@ defmodule OhioElixirWeb.Router do
     sign_in_route register_path: "/register",
                   reset_path: "/reset",
                   auth_routes_prefix: "/auth",
+                  live_view: OhioElixirWeb.Auth.SignInLive,
                   on_mount: [{OhioElixirWeb.LiveUserAuth, :live_no_user}],
                   overrides: [
                     OhioElixirWeb.AuthOverrides,
