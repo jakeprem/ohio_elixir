@@ -63,9 +63,11 @@ defmodule OhioElixirWeb.EventController do
         |> put_flash(:error, "You don't have permission to publish this event")
         |> redirect(to: ~p"/events/#{id}")
 
-      {:error, _error} ->
+      {:error, error} ->
+        message = format_ash_errors(error) || "Unable to publish event"
+
         conn
-        |> put_flash(:error, "Unable to publish event")
+        |> put_flash(:error, message)
         |> redirect(to: ~p"/events/#{id}")
     end
   end
@@ -84,9 +86,11 @@ defmodule OhioElixirWeb.EventController do
         |> put_flash(:error, "You don't have permission to cancel this event")
         |> redirect(to: ~p"/events/#{id}")
 
-      {:error, _error} ->
+      {:error, error} ->
+        message = format_ash_errors(error) || "Unable to cancel event"
+
         conn
-        |> put_flash(:error, "Unable to cancel event")
+        |> put_flash(:error, message)
         |> redirect(to: ~p"/events/#{id}")
     end
   end
@@ -106,4 +110,12 @@ defmodule OhioElixirWeb.EventController do
     |> Map.put_new(:in_person, [])
     |> Map.put_new(:online, [])
   end
+
+  defp format_ash_errors(%{errors: errors}) when is_list(errors) do
+    errors
+    |> Enum.map(& &1.message)
+    |> Enum.join(", ")
+  end
+
+  defp format_ash_errors(_), do: nil
 end

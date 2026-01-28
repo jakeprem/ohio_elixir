@@ -98,7 +98,6 @@ defmodule OhioElixir.Events.Event do
       change set_attribute(:public_at, &DateTime.utc_now/0)
 
       validate present([:title, :starts_at])
-      validate {OhioElixir.Events.Validations.RequiresLocationForFormat, []}
     end
 
     update :cancel do
