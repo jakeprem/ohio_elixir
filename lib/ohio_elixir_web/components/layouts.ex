@@ -540,7 +540,7 @@ defmodule OhioElixirWeb.Layouts do
             </a>
           </div>
           <div class="border-t border-base-300 pt-8">
-            <p class="text-sm text-base-content/50">© 2025 Ohio Elixir Community</p>
+            <p class="text-sm text-base-content/50">© <%= Date.utc_today().year %> Ohio Elixir Community</p>
           </div>
         </div>
       </div>
