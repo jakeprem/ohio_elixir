@@ -64,33 +64,39 @@ defimpl OhioElixir.OGImage.Source, for: OhioElixir.Events.Event do
   # Private helpers
 
   defp build_subtitle(event) do
-    date = format_date(event.starts_at, event.timezone)
+    {date, time} = format_datetime(event.starts_at, event.timezone)
     location = format_location(event)
 
-    "#{location} · #{date}"
+    [location, date, time]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" · ")
   end
 
-  defp format_date(starts_at, timezone) do
+  defp format_datetime(starts_at, timezone) do
     case DateTime.shift_zone(starts_at, timezone) do
       {:ok, local_dt} ->
-        Calendar.strftime(local_dt, "%B %-d, %Y")
+        date = Calendar.strftime(local_dt, "%B %-d, %Y")
+        time = Calendar.strftime(local_dt, "%-I:%M %p")
+        tz_abbrev = timezone_abbrev(timezone)
+        {date, "#{time} #{tz_abbrev}"}
 
       {:error, _} ->
-        # Fallback to UTC if timezone conversion fails
-        Calendar.strftime(starts_at, "%B %-d, %Y")
+        {Calendar.strftime(starts_at, "%B %-d, %Y"), nil}
     end
   end
 
+  defp timezone_abbrev("America/New_York"), do: "ET"
+  defp timezone_abbrev("America/Chicago"), do: "CT"
+  defp timezone_abbrev("America/Denver"), do: "MT"
+  defp timezone_abbrev("America/Los_Angeles"), do: "PT"
+  defp timezone_abbrev("Etc/UTC"), do: "UTC"
+  defp timezone_abbrev(tz), do: tz
+
   defp format_location(event) do
     case event.format do
-      :online ->
-        "Online"
-
-      :hybrid ->
-        venue_name(event) || "Hybrid"
-
-      :in_person ->
-        venue_name(event) || "In Person"
+      :online -> "Online"
+      :hybrid -> "Hybrid"
+      :in_person -> venue_name(event) || "In Person"
     end
   end
 
