@@ -76,21 +76,13 @@ defimpl OhioElixir.OGImage.Source, for: OhioElixir.Events.Event do
     case DateTime.shift_zone(starts_at, timezone) do
       {:ok, local_dt} ->
         date = Calendar.strftime(local_dt, "%B %-d, %Y")
-        time = Calendar.strftime(local_dt, "%-I:%M %p")
-        tz_abbrev = timezone_abbrev(timezone)
-        {date, "#{time} #{tz_abbrev}"}
+        time = Calendar.strftime(local_dt, "%-I:%M %p %Z")
+        {date, time}
 
       {:error, _} ->
         {Calendar.strftime(starts_at, "%B %-d, %Y"), nil}
     end
   end
-
-  defp timezone_abbrev("America/New_York"), do: "ET"
-  defp timezone_abbrev("America/Chicago"), do: "CT"
-  defp timezone_abbrev("America/Denver"), do: "MT"
-  defp timezone_abbrev("America/Los_Angeles"), do: "PT"
-  defp timezone_abbrev("Etc/UTC"), do: "UTC"
-  defp timezone_abbrev(tz), do: tz
 
   defp format_location(event) do
     case event.format do
