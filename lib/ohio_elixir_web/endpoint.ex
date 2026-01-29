@@ -4,11 +4,14 @@ defmodule OhioElixirWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
+  @session_max_age 60 * 24 * 60 * 60
+
   @session_options [
     store: :cookie,
     key: "_ohio_elixir_key",
     signing_salt: "YXM8E63H",
-    same_site: "Lax"
+    same_site: "Lax",
+    max_age: @session_max_age
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
